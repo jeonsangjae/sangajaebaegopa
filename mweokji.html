@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🍽️ 오늘 뭐먹지?</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --red:#FF3B3B;--orange:#FF7043;--yellow:#FFD600;
+  --green:#00C853;--blue:#2979FF;--purple:#7C4DFF;
+  --pink:#FF4081;--teal:#00BCD4;
+  --dark:#1A0A00;--card:#FFF8F0;--bg:#FFF3E0;
+  --shadow:rgba(0,0,0,0.15);
+}
+html,body{width:100%;min-height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg);overflow-x:hidden;user-select:none;-webkit-user-select:none;-webkit-font-smoothing:antialiased}
+
+/* ─── BG pattern ─── */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,100,0,.06) 1px,transparent 1px);
+  background-size:28px 28px}
+
+/* ════════════════════════════
+   SCREENS
+════════════════════════════ */
+.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;
+  padding:20px 16px 40px;position:relative;z-index:1}
+.screen.on{display:flex}
+
+/* ════════════════════════════
+   HOME SCREEN
+════════════════════════════ */
+#home{background:linear-gradient(160deg,#FFF3E0 0%,#FFE0B2 100%)}
+.home-title{font-family:'Jua',sans-serif;font-size:clamp(2.8rem,10vw,4.5rem);
+  color:var(--dark);text-align:center;line-height:1.2;margin:24px 0 4px;
+  animation:titleWobble 3s ease-in-out infinite}
+@keyframes titleWobble{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg)}}
+.home-subtitle{font-family:'Jua',sans-serif;font-size:1.1rem;color:#8D5524;
+  text-align:center;margin-bottom:36px}
+.home-emoji{font-size:5rem;display:block;text-align:center;margin-bottom:8px;
+  animation:bounce 1.8s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:420px}
+.mode-card{
+  background:var(--card);border-radius:20px;padding:22px 14px;text-align:center;
+  cursor:pointer;position:relative;overflow:hidden;
+  border:3px solid var(--dark);
+  box-shadow:5px 5px 0 var(--dark);
+  transition:transform .12s,box-shadow .12s}
+.mode-card:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--dark)}
+.mode-card:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--dark)}
+.mode-card.slot{border-color:var(--orange);box-shadow:5px 5px 0 var(--orange)}
+.mode-card.wc  {border-color:var(--blue);  box-shadow:5px 5px 0 var(--blue)}
+.mode-card.vote{border-color:var(--green); box-shadow:5px 5px 0 var(--green)}
+.mode-card.rng {border-color:var(--purple);box-shadow:5px 5px 0 var(--purple)}
+.mode-card:hover.slot{box-shadow:7px 7px 0 var(--orange)}
+.mode-card:hover.wc  {box-shadow:7px 7px 0 var(--blue)}
+.mode-card:hover.vote{box-shadow:7px 7px 0 var(--green)}
+.mode-card:hover.rng {box-shadow:7px 7px 0 var(--purple)}
+.mode-emoji{font-size:2.6rem;display:block;margin-bottom:8px}
+.mode-name{font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:1rem;color:var(--dark);letter-spacing:-.01em}
+.mode-desc{font-size:.75rem;color:#888;margin-top:4px;font-family:'Noto Sans KR',sans-serif;font-weight:500}
+
+/* ════════════════════════════
+   SHARED UI
+════════════════════════════ */
+.back-btn{
+  position:fixed;top:14px;left:14px;z-index:999;
+  background:var(--card);border:3px solid var(--dark);border-radius:50%;
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;cursor:pointer;box-shadow:3px 3px 0 var(--dark);
+  transition:transform .1s,box-shadow .1s}
+.back-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--dark)}
+
+.screen-title{font-family:'Black Han Sans',sans-serif;font-size:1.6rem;
+  color:var(--dark);margin:52px 0 4px;text-align:center}
+.screen-sub{font-size:.88rem;color:#888;margin-bottom:20px;text-align:center;
+  font-family:'Noto Sans KR',sans-serif;font-weight:500}
+
+.pill-btn{
+  font-family:'Black Han Sans',sans-serif;font-size:1rem;
+  color:white;border:3px solid var(--dark);border-radius:999px;
+  padding:13px 36px;cursor:pointer;box-shadow:4px 4px 0 var(--dark);
+  transition:transform .1s,box-shadow .1s;display:inline-block}
+.pill-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--dark)}
+.pill-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--dark)}
+.pill-btn.orange{background:var(--orange)}
+.pill-btn.blue  {background:var(--blue)}
+.pill-btn.green {background:var(--green)}
+.pill-btn.red   {background:var(--red)}
+.pill-btn.purple{background:var(--purple)}
+.pill-btn.gray  {background:#aaa;color:var(--dark)}
+
+/* ════════════════════════════
+   SLOT MACHINE
+════════════════════════════ */
+#slotScreen{background:linear-gradient(160deg,#FFF8E1,#FFE0B2)}
+#slotScreen .screen-title{color:#E65100}
+#slotScreen .screen-sub{color:#BF360C}
+
+.slot-machine{
+  background:white;border:4px solid var(--dark);border-radius:24px;
+  padding:24px 20px 20px;width:100%;max-width:360px;
+  box-shadow:7px 7px 0 var(--dark)}
+
+/* ── 메인 릴 (크게 하나) ── */
+.slot-main-label{
+  font-family:'Black Han Sans',sans-serif;font-size:.7rem;
+  color:#E65100;letter-spacing:.25em;text-align:center;
+  margin-bottom:10px}
+
+.slot-reel-wrap{position:relative;margin-bottom:16px}
+
+.slot-reel{
+  width:100%;height:130px;
+  background:linear-gradient(160deg,#FFF3E0,#FFE0B2);
+  border:3px solid var(--dark);
+  border-radius:16px;overflow:hidden;position:relative;
+  box-shadow:inset 0 3px 12px rgba(0,0,0,.08)}
+.slot-reel::before,.slot-reel::after{
+  content:'';position:absolute;left:0;right:0;height:34px;z-index:2;pointer-events:none}
+.slot-reel::before{top:0;background:linear-gradient(#FFF8F0,transparent)}
+.slot-reel::after{bottom:0;background:linear-gradient(transparent,#FFF8F0)}
+
+.slot-inner{position:absolute;width:100%;top:0}
+.slot-item{
+  height:130px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px}
+.slot-item-emoji{font-size:3rem;line-height:1}
+.slot-item-name{
+  font-family:'Black Han Sans',sans-serif;font-size:1.25rem;
+  color:var(--dark)}
+
+/* 선택 하이라이트 */
+.slot-highlight{
+  position:absolute;top:50%;left:0;right:0;height:130px;
+  transform:translateY(-50%);
+  border-top:3px solid var(--orange);
+  border-bottom:3px solid var(--orange);
+  background:rgba(255,112,67,.06);
+  pointer-events:none;z-index:3}
+
+/* ── 부가 정보 뱃지 ── */
+.slot-tags-label{
+  font-family:'Noto Sans KR',sans-serif;font-weight:500;
+  font-size:.72rem;color:#999;text-align:center;margin-bottom:8px}
+.slot-tags{
+  display:flex;justify-content:center;gap:8px;margin-bottom:18px;min-height:36px}
+.slot-tag{
+  background:#FFF3E0;border:2px solid var(--orange);
+  border-radius:999px;padding:6px 14px;
+  font-family:'Jua',sans-serif;font-size:.85rem;color:var(--orange);
+  display:flex;align-items:center;gap:4px;
+  animation:tagPop .35s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes tagPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+
+/* ── 결과 카드 ── */
+.slot-result-card{
+  background:linear-gradient(135deg,#FFF3E0,#FFE0B2);
+  border:3px solid var(--orange);
+  border-radius:16px;padding:16px;text-align:center;
+  margin-bottom:14px;display:none;
+  box-shadow:4px 4px 0 var(--orange);
+  animation:cardReveal .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes cardReveal{from{opacity:0;transform:scale(.85) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.slot-result-card.on{display:block}
+.result-emoji{font-size:3rem;display:block;margin-bottom:4px}
+.result-foodname{
+  font-family:'Black Han Sans',sans-serif;font-size:1.9rem;
+  color:var(--dark);margin-bottom:4px}
+.result-decree{
+  font-family:'Noto Sans KR',sans-serif;font-weight:700;
+  font-size:.82rem;color:var(--orange);letter-spacing:.05em}
+
+/* ── 스핀 버튼 ── */
+.spin-btn{
+  width:100%;font-family:'Black Han Sans',sans-serif;font-size:1.35rem;
+  background:var(--orange);color:white;
+  border:3px solid var(--dark);border-radius:14px;padding:15px;
+  cursor:pointer;box-shadow:5px 5px 0 var(--dark);
+  transition:transform .1s,box-shadow .1s;letter-spacing:.05em}
+.spin-btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--dark)}
+.spin-btn:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--dark)}
+.spin-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:5px 5px 0 var(--dark)}
+
+.spin-counter{
+  font-family:'Noto Sans KR',sans-serif;font-weight:500;
+  font-size:.82rem;color:#BF360C;text-align:center;margin-top:10px;min-height:20px}
+
+/* 취소 버튼 (fixed, 도망) */
+.slot-cancel{
+  font-family:'Black Han Sans',sans-serif;font-size:.9rem;
+  color:white;background:var(--red);
+  border:3px solid var(--dark);border-radius:12px;
+  padding:10px 24px;cursor:pointer;position:fixed;z-index:999;
+  box-shadow:3px 3px 0 var(--dark);white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;transition:background .2s}
+
+/* 결정장애 판정 overlay */
+.disorder-overlay{
+  position:fixed;inset:0;z-index:2000;background:rgba(255,0,0,.92);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:30px;animation:disorderIn .3s ease}
+@keyframes disorderIn{from{opacity:0;transform:scale(1.2)}to{opacity:1;transform:scale(1)}}
+.disorder-overlay.on{display:flex}
+.disorder-title{font-family:'Black Han Sans',sans-serif;font-size:2.5rem;
+  color:white;margin-bottom:12px;animation:shake .1s infinite}
+@keyframes shake{0%,100%{transform:rotate(0)}33%{transform:rotate(-3deg)}66%{transform:rotate(3deg)}}
+.disorder-stamp{font-size:5rem;margin-bottom:16px}
+.disorder-msg{font-family:'Jua',sans-serif;font-size:1.1rem;color:rgba(255,255,255,.9);
+  line-height:1.6;margin-bottom:24px}
+.disorder-sub{font-size:.8rem;color:rgba(255,255,255,.6);font-family:'Noto Sans KR',sans-serif}
+
+/* ════════════════════════════
+   WORLD CUP
+════════════════════════════ */
+#wcScreen{background:linear-gradient(160deg,#E3F2FD,#BBDEFB)}
+.wc-progress{
+  background:rgba(0,0,0,.08);border-radius:999px;height:8px;
+  width:100%;max-width:360px;margin-bottom:20px;overflow:hidden}
+.wc-progress-bar{height:100%;background:var(--blue);border-radius:999px;
+  transition:width .4s ease}
+
+.wc-round{font-family:'Black Han Sans',sans-serif;font-size:.8rem;
+  color:var(--blue);letter-spacing:.2em;margin-bottom:12px;text-align:center}
+
+.wc-versus{
+  display:flex;gap:12px;width:100%;max-width:380px;align-items:center}
+.wc-card{
+  flex:1;background:white;border:4px solid var(--dark);border-radius:20px;
+  padding:20px 10px;text-align:center;cursor:pointer;
+  box-shadow:5px 5px 0 var(--dark);transition:transform .12s,box-shadow .12s;
+  position:relative;overflow:hidden}
+.wc-card:hover{transform:translate(-2px,-2px) scale(1.03);box-shadow:7px 7px 0 var(--dark)}
+.wc-card:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--dark)}
+.wc-card .food-emoji{font-size:3rem;display:block;margin-bottom:8px;
+  transition:transform .15s}
+.wc-card:hover .food-emoji{transform:scale(1.2)}
+.wc-card .food-name{font-family:'Black Han Sans',sans-serif;font-size:1.1rem;color:var(--dark)}
+.wc-vs{font-family:'Black Han Sans',sans-serif;font-size:1.4rem;color:var(--dark);
+  flex-shrink:0;text-align:center;padding:4px 0}
+
+.wc-winner-screen{text-align:center;animation:winnerIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes winnerIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+.wc-winner-emoji{font-size:5rem;display:block;margin-bottom:12px;
+  animation:winnerBounce .6s .2s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes winnerBounce{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
+.wc-winner-text{font-family:'Black Han Sans',sans-serif;font-size:2rem;
+  color:var(--blue);margin-bottom:6px}
+.wc-winner-sub{font-family:'Jua',sans-serif;font-size:1rem;color:#666}
+
+/* ════════════════════════════
+   GROUP VOTE
+════════════════════════════ */
+#voteScreen{background:linear-gradient(160deg,#E8F5E9,#C8E6C9)}
+.vote-setup,.vote-room{width:100%;max-width:400px}
+.vote-input{
+  background:white;border:3px solid var(--dark);border-radius:12px;
+  font-family:'Jua',sans-serif;font-size:1rem;padding:12px 16px;
+  width:100%;outline:none;box-shadow:3px 3px 0 var(--dark);
+  margin-bottom:10px}
+
+.vote-items{width:100%;max-width:400px}
+.vote-item-row{
+  display:flex;align-items:center;gap:8px;background:white;
+  border:3px solid var(--dark);border-radius:14px;padding:10px 14px;
+  margin-bottom:8px;box-shadow:3px 3px 0 var(--dark)}
+.vote-item-emoji{font-size:1.6rem;flex-shrink:0}
+.vote-item-name{font-family:'Black Han Sans',sans-serif;font-size:.95rem;flex:1}
+.vote-item-bar-wrap{width:80px;height:10px;background:#eee;border-radius:5px;overflow:hidden}
+.vote-item-bar{height:100%;background:var(--green);border-radius:5px;transition:width .4s}
+.vote-item-count{font-size:.75rem;color:#888;width:28px;text-align:right;
+  font-family:'Noto Sans KR',sans-serif}
+.vote-btn{
+  font-family:'Black Han Sans',sans-serif;font-size:.85rem;
+  background:var(--green);color:white;border:2px solid var(--dark);
+  border-radius:8px;padding:8px 14px;cursor:pointer;
+  box-shadow:2px 2px 0 var(--dark);transition:all .1s;white-space:nowrap;flex-shrink:0}
+.vote-btn:active{transform:translate(1px,1px);box-shadow:none}
+.vote-btn.voted{background:#ccc;color:#999;cursor:default}
+
+.room-code{
+  background:var(--dark);color:var(--yellow);
+  font-family:'Black Han Sans',sans-serif;font-size:2rem;
+  letter-spacing:.3em;padding:14px 30px;border-radius:12px;
+  margin-bottom:8px;text-align:center}
+.room-code-sub{font-size:.8rem;color:#888;margin-bottom:20px;text-align:center;
+  font-family:'Noto Sans KR',sans-serif;font-weight:500}
+
+.vote-winner-banner{
+  background:var(--green);border:4px solid var(--dark);border-radius:20px;
+  padding:20px;text-align:center;box-shadow:5px 5px 0 var(--dark);
+  animation:winnerIn .4s ease}
+.vote-winner-banner .w-emoji{font-size:3rem;margin-bottom:8px;display:block}
+.vote-winner-banner .w-name{font-family:'Black Han Sans',sans-serif;font-size:1.6rem;color:white}
+.vote-winner-banner .w-sub{font-size:.85rem;color:rgba(255,255,255,.8);
+  font-family:'Jua',sans-serif}
+
+/* ════════════════════════════
+   RANDOM ROULETTE
+════════════════════════════ */
+#rngScreen{background:linear-gradient(160deg,#F3E5F5,#E1BEE7)}
+.roulette-wrap{position:relative;width:280px;height:280px;margin:10px auto 20px}
+canvas#rouletteCanvas{border-radius:50%;border:5px solid var(--dark);
+  box-shadow:6px 6px 0 var(--dark)}
+.roulette-arrow{
+  position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+  font-size:2rem;z-index:10;filter:drop-shadow(2px 2px 0 var(--dark))}
+.roulette-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:40px;height:40px;background:white;border:4px solid var(--dark);
+  border-radius:50%;z-index:5;box-shadow:2px 2px 0 var(--dark);
+  display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+
+.rng-result{
+  text-align:center;font-family:'Black Han Sans',sans-serif;
+  font-size:1.4rem;color:var(--purple);min-height:50px;margin-bottom:16px}
+.rng-result-sub{font-size:.85rem;color:#999;font-family:'Jua',sans-serif;margin-top:4px}
+
+/* ════════════════════════════
+   FOOD EDITOR (shared)
+════════════════════════════ */
+.food-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;
+  width:100%;max-width:400px}
+.food-chip{
+  background:white;border:2px solid var(--dark);border-radius:999px;
+  padding:5px 12px;font-family:'Jua',sans-serif;font-size:.9rem;
+  cursor:pointer;box-shadow:2px 2px 0 var(--dark);
+  transition:all .1s;display:flex;align-items:center;gap:4px}
+.food-chip:hover{background:#ffe0b2}
+.food-chip.selected{background:var(--orange);color:white;border-color:var(--orange)}
+.food-chip .chip-del{font-size:.7rem;opacity:.6}
+
+.add-food-row{display:flex;gap:8px;width:100%;max-width:400px;margin-bottom:16px}
+.add-food-input{
+  flex:1;background:white;border:3px solid var(--dark);border-radius:999px;
+  font-family:'Noto Sans KR',sans-serif;font-size:.95rem;padding:10px 18px;font-weight:500;outline:none;
+  box-shadow:3px 3px 0 var(--dark)}
+.add-food-btn{
+  font-family:'Black Han Sans',sans-serif;font-size:.85rem;
+  background:var(--orange);color:white;border:3px solid var(--dark);
+  border-radius:999px;padding:10px 18px;cursor:pointer;
+  box-shadow:3px 3px 0 var(--dark);white-space:nowrap}
+
+/* ════════════════════════════
+   CONFETTI
+════════════════════════════ */
+.confetti-item{position:fixed;pointer-events:none;z-index:3000;
+  animation:confettiFall linear forwards}
+@keyframes confettiFall{
+  0%{transform:translateY(-20px) rotate(0deg);opacity:1}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* speech bubble for cancel btn */
+.slot-speech{
+  position:fixed;z-index:1000;background:white;
+  border:3px solid var(--dark);border-radius:12px;
+  padding:7px 14px;font-family:'Jua',sans-serif;font-size:.9rem;
+  pointer-events:none;white-space:nowrap;opacity:0;
+  transform:scale(.7);transition:opacity .12s,transform .12s;
+  box-shadow:3px 3px 0 var(--dark)}
+.slot-speech::after{content:'';position:absolute;bottom:-12px;left:16px;
+  border:6px solid transparent;border-top-color:var(--dark)}
+.slot-speech::before{content:'';position:absolute;bottom:-7px;left:17px;
+  border:5px solid transparent;border-top-color:white;z-index:1}
+.slot-speech.on{opacity:1;transform:scale(1)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     HOME
+══════════════════════════════ -->
+<div class="screen on" id="home">
+  <span class="home-emoji">🍽️</span>
+  <div class="home-title">오늘<br>뭐먹지?</div>
+  <div class="home-subtitle">결정장애 해결사가 왔다 😎</div>
+
+  <div class="mode-grid">
+    <div class="mode-card slot" onclick="openScreen('slotScreen')">
+      <span class="mode-emoji">🎰</span>
+      <div class="mode-name">슬롯머신</div>
+      <div class="mode-desc">취소 못 함 ㅋ</div>
+    </div>
+    <div class="mode-card wc" onclick="openScreen('wcScreen')">
+      <span class="mode-emoji">🏆</span>
+      <div class="mode-name">이상형 월드컵</div>
+      <div class="mode-desc">1:1 토너먼트</div>
+    </div>
+    <div class="mode-card vote" onclick="openScreen('voteScreen')">
+      <span class="mode-emoji">🗳️</span>
+      <div class="mode-name">단체 투표</div>
+      <div class="mode-desc">친구들이랑 같이</div>
+    </div>
+    <div class="mode-card rng" onclick="openScreen('rngScreen')">
+      <span class="mode-emoji">🎡</span>
+      <div class="mode-name">룰렛</div>
+      <div class="mode-desc">운에 맡겨라</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SLOT MACHINE SCREEN
+══════════════════════════════ -->
+<div class="screen" id="slotScreen">
+  <div class="back-btn" onclick="goHome()">←</div>
+  <div class="screen-title" style="color:#FFD600">🎰 슬롯머신</div>
+  <div class="screen-sub" style="color:#8D5524">돌리면 그게 오늘 메뉴야. 변명 금지.</div>
+
+  <div class="slot-machine">
+
+    <!-- 메인 릴 (음식 결정) -->
+    <div class="slot-main-label">🍽️ 오늘의 메뉴</div>
+    <div class="slot-reel-wrap">
+      <div class="slot-reel" id="reel0">
+        <div class="slot-highlight"></div>
+        <div class="slot-inner" id="inner0"></div>
+      </div>
+    </div>
+
+    <!-- 결과 카드 -->
+    <div class="slot-result-card" id="slotResultCard">
+      <span class="result-emoji" id="resultEmoji">🍽️</span>
+      <div class="result-foodname" id="resultFoodName">?</div>
+      <div class="result-decree">✅ 오늘 메뉴 확정!</div>
+    </div>
+
+    <!-- 분위기·가격 뱃지 (참고용) -->
+    <div class="slot-tags-label" id="slotTagsLabel" style="display:none">
+      🎲 오늘의 추천 조합
+    </div>
+    <div class="slot-tags" id="slotTags"></div>
+
+    <button class="spin-btn" id="spinBtn" onclick="spinSlot()">🎰 돌려!</button>
+    <div class="spin-counter" id="spinCounter"></div>
+  </div>
+</div>
+
+<!-- 취소 버튼 -->
+<button class="slot-cancel" id="cancelBtn" style="display:none">😤 싫어요</button>
+<div class="slot-speech" id="slotSpeech"></div>
+
+<!-- 결정장애 overlay -->
+<div class="disorder-overlay" id="disorderOverlay">
+  <div class="disorder-stamp">🚨</div>
+  <div class="disorder-title">결정장애 판정!</div>
+  <div class="disorder-msg">
+    이미 <span id="disorderCount">0</span>번이나 돌렸잖아요<br>
+    지금 당장 나가서 <span id="disorderFood">이거</span> 먹어요!!<br>
+    <span style="font-size:1.5rem">😡</span>
+  </div>
+  <div class="disorder-sub">화면을 탭하면 닫혀요</div>
+</div>
+
+<!-- ══════════════════════════════
+     WORLD CUP SCREEN
+══════════════════════════════ -->
+<div class="screen" id="wcScreen">
+  <div class="back-btn" onclick="goHome()">←</div>
+  <div class="screen-title">🏆 음식 이상형 월드컵</div>
+  <div class="screen-sub">둘 중 더 먹고 싶은 걸 골라요!</div>
+
+  <div id="wcSetup" style="width:100%;max-width:400px">
+    <div class="food-chips" id="wcFoodChips"></div>
+    <div class="add-food-row">
+      <input class="add-food-input" id="wcAddInput" placeholder="음식 추가..." maxlength="10">
+      <button class="add-food-btn" onclick="wcAddFood()">+ 추가</button>
+    </div>
+    <button class="pill-btn blue" onclick="startWC()" style="width:100%;text-align:center">
+      🏆 토너먼트 시작!
+    </button>
+  </div>
+
+  <div id="wcGame" style="display:none;width:100%;align-items:center;flex-direction:column">
+    <div class="wc-round" id="wcRoundLabel"></div>
+    <div class="wc-progress" style="max-width:360px;width:100%">
+      <div class="wc-progress-bar" id="wcProgressBar"></div>
+    </div>
+    <div class="wc-versus" id="wcVersus"></div>
+  </div>
+
+  <div id="wcWinner" style="display:none;text-align:center">
+    <div class="wc-winner-screen">
+      <span class="wc-winner-emoji" id="wcWinnerEmoji">🍽️</span>
+      <div class="wc-winner-text" id="wcWinnerName"></div>
+      <div class="wc-winner-sub">오늘의 최종 메뉴!</div>
+      <div style="margin-top:20px;display:flex;gap:10px;justify-content:center">
+        <button class="pill-btn blue" onclick="startWC()">다시 하기</button>
+        <button class="pill-btn gray" onclick="resetWC()">메뉴 변경</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     GROUP VOTE SCREEN
+══════════════════════════════ -->
+<div class="screen" id="voteScreen">
+  <div class="back-btn" onclick="goHome()">←</div>
+  <div class="screen-title">🗳️ 단체 투표</div>
+  <div class="screen-sub">친구들이랑 같이 골라요!</div>
+
+  <div id="voteSetup" style="width:100%;max-width:400px">
+    <div class="food-chips" id="voteFoodChips"></div>
+    <div class="add-food-row">
+      <input class="add-food-input" id="voteAddInput" placeholder="음식 추가..." maxlength="10">
+      <button class="add-food-btn" onclick="voteAddFood()">+ 추가</button>
+    </div>
+    <input class="vote-input" id="voterName" placeholder="내 이름 (선택)..." maxlength="8" style="margin-bottom:16px">
+    <button class="pill-btn green" onclick="startVote()" style="width:100%;text-align:center">
+      🗳️ 투표 시작!
+    </button>
+  </div>
+
+  <div id="voteRoom" style="display:none;width:100%;max-width:400px">
+    <div class="room-code" id="roomCode"></div>
+    <div class="room-code-sub">📱 친구들에게 위 코드를 공유하세요 (같은 기기에서 사용)</div>
+
+    <div class="vote-items" id="voteItemsList"></div>
+
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="pill-btn green" onclick="closeVote()" style="flex:1;text-align:center">
+        투표 마감!
+      </button>
+      <button class="pill-btn gray" onclick="resetVote()" style="text-align:center">
+        처음부터
+      </button>
+    </div>
+
+    <div id="voteWinner" style="display:none;margin-top:16px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     ROULETTE SCREEN
+══════════════════════════════ -->
+<div class="screen" id="rngScreen">
+  <div class="back-btn" onclick="goHome()">←</div>
+  <div class="screen-title">🎡 룰렛</div>
+  <div class="screen-sub">운에 맡기는 거예요 🍀</div>
+
+  <div id="rngSetup" style="width:100%;max-width:400px">
+    <div class="food-chips" id="rngFoodChips"></div>
+    <div class="add-food-row">
+      <input class="add-food-input" id="rngAddInput" placeholder="음식 추가..." maxlength="10">
+      <button class="add-food-btn" onclick="rngAddFood()">+ 추가</button>
+    </div>
+    <button class="pill-btn purple" onclick="buildRoulette()" style="width:100%;text-align:center">
+      🎡 룰렛 만들기
+    </button>
+  </div>
+
+  <div id="rngPlay" style="display:none;width:100%;text-align:center">
+    <div class="roulette-wrap">
+      <div class="roulette-arrow">▼</div>
+      <canvas id="rouletteCanvas" width="280" height="280"></canvas>
+      <div class="roulette-center">🍽️</div>
+    </div>
+
+    <!-- 결과 카드: 돌리기 전엔 숨김, 결과 나오면 표시 -->
+    <div id="rngResultCard" style="display:none;
+      background:white;border:3px solid var(--purple);border-radius:20px;
+      padding:20px 24px;margin:14px auto 16px;max-width:280px;
+      box-shadow:5px 5px 0 var(--purple);
+      animation:cardReveal .4s cubic-bezier(.34,1.56,.64,1)">
+      <div style="font-size:.72rem;font-family:'Noto Sans KR',sans-serif;
+        font-weight:700;color:var(--purple);letter-spacing:.15em;margin-bottom:10px">
+        🎯 오늘의 메뉴 확정!
+      </div>
+      <div id="rngWinnerEmoji" style="font-size:3.2rem;line-height:1;margin-bottom:8px"></div>
+      <div id="rngWinnerName" style="font-family:'Black Han Sans',sans-serif;
+        font-size:2rem;color:var(--dark)"></div>
+    </div>
+
+    <!-- 결과 나오기 전 안내 문구 -->
+    <div id="rngHint" style="color:#bbb;font-size:.9rem;font-family:'Noto Sans KR',sans-serif;
+      margin-bottom:16px">버튼을 눌러 돌려봐요!</div>
+
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="pill-btn purple" id="spinRouletteBtn" onclick="spinRoulette()">
+        🎡 돌리기!
+      </button>
+      <button class="pill-btn gray" onclick="resetRNG()">메뉴 변경</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//   FOOD DATA
+// ══════════════════════════════════════════
+const DEFAULT_FOODS = [
+  {e:'🍗',n:'치킨'},{e:'🍕',n:'피자'},{e:'🍜',n:'라면'},
+  {e:'🍣',n:'초밥'},{e:'🥩',n:'삼겹살'},{e:'🍔',n:'햄버거'},
+  {e:'🍛',n:'카레'},{e:'🍱',n:'도시락'},{e:'🥗',n:'샐러드'},
+  {e:'🍝',n:'파스타'},{e:'🍲',n:'찌개'},{e:'🌮',n:'타코'},
+  {e:'🥪',n:'샌드위치'},{e:'🍚',n:'볶음밥'},{e:'🦞',n:'해산물'},
+  {e:'🍤',n:'튀김'}
+];
+const SLOT_MOODS = [
+  {e:'🏠',n:'집에서'},{e:'🏪',n:'식당에서'},{e:'🛵',n:'배달로'},
+  {e:'🎉',n:'파티로'},{e:'🌙',n:'야식으로'},{e:'☀️',n:'브런치로'}
+];
+const SLOT_PRICES = [
+  {e:'💸',n:'만원 이하'},{e:'💵',n:'2만원대'},{e:'💰',n:'3만원대'},
+  {e:'💎',n:'고급지게'},{e:'🆓',n:'냉장고 털기'}
+];
+const FOOD_EMOJIS = ['🍗','🍕','🍜','🍣','🥩','🍔','🍛','🍱','🥗','🍝','🍲','🌮','🥪','🍚','🦞','🍤','🍦','🧆','🌯','🥘'];
+
+function getEmoji(name) {
+  const f = DEFAULT_FOODS.find(d => d.n === name);
+  return f ? f.e : FOOD_EMOJIS[Math.abs(name.split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % FOOD_EMOJIS.length];
+}
+
+// Shared food state per mode
+let slotFoods  = [...DEFAULT_FOODS];
+let wcFoods    = [...DEFAULT_FOODS];
+let voteFoods  = [...DEFAULT_FOODS];
+let rngFoods   = [...DEFAULT_FOODS];
+
+// ══════════════════════════════════════════
+//   SCREEN MANAGER
+// ══════════════════════════════════════════
+function openScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  if (id==='slotScreen')  initSlot();
+  if (id==='wcScreen')    initWC();
+  if (id==='voteScreen')  initVote();
+  if (id==='rngScreen')   initRNG();
+}
+function goHome() {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('home').classList.add('on');
+  document.getElementById('cancelBtn').style.display='none';
+  document.getElementById('disorderOverlay').classList.remove('on');
+}
+
+// ══════════════════════════════════════════
+//   FOOD CHIP EDITOR
+// ══════════════════════════════════════════
+function renderChips(containerId, foods, onToggle) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = foods.map((f,i)=>`
+    <div class="food-chip ${f.sel?'selected':''}" onclick="(${onToggle.toString()})(${i})">
+      ${f.e} ${f.n}
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+//   ★ SLOT MACHINE
+// ══════════════════════════════════════════
+let spinCount = 0, isSpinning = false, lastSlotResult = null;
+let cancelVisible = false, escapeCount = 0, speechTimer = null;
+
+const cancelLines = [
+  '싫어요!!','도망갈 거예요 😤','변명 금지입니다','이미 정해진 메뉴야 😡',
+  '왜 취소하려고요??','그냥 먹어요 진짜로','...포기 안 해요','😤😤😤',
+];
+
+function initSlot() {
+  // 메인 릴 — 음식만
+  const inner = document.getElementById('inner0');
+  const items = [...slotFoods, ...slotFoods, ...slotFoods];
+  inner.innerHTML = items.map(f => `
+    <div class="slot-item">
+      <span class="slot-item-emoji">${f.e}</span>
+      <span class="slot-item-name">${f.n}</span>
+    </div>`).join('');
+  inner.style.transform = 'translateY(0)';
+
+  spinCount = 0;
+  isSpinning = false;
+  cancelVisible = false;
+  document.getElementById('spinCounter').textContent = '';
+  document.getElementById('slotResultCard').classList.remove('on');
+  document.getElementById('slotTags').innerHTML = '';
+  document.getElementById('slotTagsLabel').style.display = 'none';
+  document.getElementById('cancelBtn').style.display = 'none';
+  document.getElementById('disorderOverlay').classList.remove('on');
+  document.getElementById('disorderOverlay').onclick =
+    () => document.getElementById('disorderOverlay').classList.remove('on');
+}
+
+function spinSlot() {
+  if (isSpinning) return;
+  isSpinning = true;
+  spinCount++;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('slotResultCard').classList.remove('on');
+  document.getElementById('slotTags').innerHTML = '';
+  document.getElementById('slotTagsLabel').style.display = 'none';
+
+  // 결과 선택
+  const foodResult  = slotFoods[Math.floor(Math.random() * slotFoods.length)];
+  const moodResult  = SLOT_MOODS[Math.floor(Math.random() * SLOT_MOODS.length)];
+  const priceResult = SLOT_PRICES[Math.floor(Math.random() * SLOT_PRICES.length)];
+  lastSlotResult = [foodResult, moodResult, priceResult];
+
+  // 애니메이션
+  const inner    = document.getElementById('inner0');
+  const itemH    = 130;
+  const total    = slotFoods.length * 3;
+  const targetIdx = slotFoods.length + slotFoods.indexOf(foodResult);
+  const finalY   = -(targetIdx * itemH) + itemH;
+  const duration = 1600;
+  let startTime  = null;
+
+  function animSpin(ts) {
+    if (!startTime) startTime = ts;
+    const elapsed  = ts - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // 빠르게 시작 → 느리게 멈추는 ease-out
+    const eased = 1 - Math.pow(1 - progress, 4);
+    const spinDist = total * itemH * 2;
+    const y = -(spinDist * eased) + finalY * eased;
+    inner.style.transform = `translateY(${y}px)`;
+    if (progress < 1) {
+      requestAnimationFrame(animSpin);
+    } else {
+      inner.style.transform = `translateY(${finalY}px)`;
+      onReelDone();
+    }
+  }
+  requestAnimationFrame(animSpin);
+}
+
+function onReelDone() {
+  isSpinning = false;
+  document.getElementById('spinBtn').disabled = false;
+  const [food, mood, price] = lastSlotResult;
+
+  // 결과 카드 표시
+  document.getElementById('resultEmoji').textContent    = food.e;
+  document.getElementById('resultFoodName').textContent = food.n;
+  document.getElementById('slotResultCard').classList.add('on');
+
+  // 분위기·가격 뱃지 — 딜레이 후 순서대로 등장
+  setTimeout(() => {
+    document.getElementById('slotTagsLabel').style.display = 'block';
+    const tags = document.getElementById('slotTags');
+    tags.innerHTML = '';
+    [[mood.e, mood.n, 0], [price.e, price.n, 120]].forEach(([e, n, delay]) => {
+      const tag = document.createElement('div');
+      tag.className = 'slot-tag';
+      tag.style.animationDelay = delay + 'ms';
+      tag.textContent = `${e} ${n}`;
+      tags.appendChild(tag);
+    });
+  }, 300);
+
+  // 취소 버튼 등장
+  showCancelBtn();
+
+  // 카운터 메시지
+  const msgs = ['', '이미 결정됐어요 😤', '두 번이나 돌렸네요', '세 번째… 결정장애 의심 🚨',
+    '네 번째! 진단 내립니다 😱'];
+  document.getElementById('spinCounter').textContent =
+    msgs[Math.min(spinCount, msgs.length - 1)];
+
+  if (spinCount === 1) launchConfetti(6);
+
+  if (spinCount >= 5) {
+    setTimeout(() => {
+      document.getElementById('disorderCount').textContent = spinCount;
+      document.getElementById('disorderFood').textContent = food.e + ' ' + food.n;
+      document.getElementById('disorderOverlay').classList.add('on');
+    }, 600);
+  }
+}
+
+function showCancelBtn() {
+  const btn = document.getElementById('cancelBtn');
+  btn.style.display = 'block';
+  cancelVisible = true;
+  escapeCount = 0;
+  // Initial position: bottom center
+  const bw = btn.offsetWidth + 20, bh = btn.offsetHeight + 20;
+  btn.style.left = (window.innerWidth/2 - bw/2) + 'px';
+  btn.style.top  = (window.innerHeight - bh - 40) + 'px';
+}
+
+let lastCancelEscape = 0;
+function runCancelAway(mx, my) {
+  const now = Date.now();
+  if (now - lastCancelEscape < 100 || !cancelVisible) return;
+  lastCancelEscape = now;
+  escapeCount++;
+  const btn = document.getElementById('cancelBtn');
+  const bw = btn.offsetWidth + 20, bh = btn.offsetHeight + 20;
+  const pad = 12;
+  let best = null, bestScore = -1;
+  for (let i=0;i<40;i++) {
+    const nx = pad + Math.random()*(window.innerWidth - bw - pad*2);
+    const ny = pad + Math.random()*(window.innerHeight - bh - pad*2);
+    const dp = Math.hypot(nx-mx, ny-my);
+    const cx = parseFloat(btn.style.left)||window.innerWidth/2;
+    const cy = parseFloat(btn.style.top)||window.innerHeight/2;
+    const dc = Math.hypot(nx-cx, ny-cy);
+    const score = dp*.6 + dc*.4;
+    if (score > bestScore) { bestScore=score; best={x:nx,y:ny}; }
+  }
+  btn.style.left = best.x+'px'; btn.style.top = best.y+'px';
+
+  // Speech bubble
+  const speech = document.getElementById('slotSpeech');
+  speech.textContent = cancelLines[(escapeCount-1) % cancelLines.length];
+  speech.style.left = best.x+'px';
+  speech.style.top  = (best.y - 46)+'px';
+  speech.classList.add('on');
+  clearTimeout(speechTimer);
+  speechTimer = setTimeout(()=>speech.classList.remove('on'), 1400);
+}
+
+// Mouse & Touch
+document.addEventListener('mousemove', e => {
+  if (!cancelVisible) return;
+  const btn = document.getElementById('cancelBtn');
+  const r = btn.getBoundingClientRect();
+  if (Math.hypot(e.clientX-(r.left+r.width/2), e.clientY-(r.top+r.height/2)) < 160)
+    runCancelAway(e.clientX, e.clientY);
+}, {passive:true});
+
+function onTouchMove(e) {
+  if (!cancelVisible) return;
+  const t = (e.touches||e.changedTouches)[0];
+  if (!t) return;
+  const btn = document.getElementById('cancelBtn');
+  const r = btn.getBoundingClientRect();
+  if (Math.hypot(t.clientX-(r.left+r.width/2), t.clientY-(r.top+r.height/2)) < 200)
+    runCancelAway(t.clientX, t.clientY);
+}
+document.addEventListener('touchmove',  onTouchMove, {passive:true});
+document.addEventListener('touchstart', onTouchMove, {passive:true});
+document.getElementById('cancelBtn').addEventListener('click', e=>{e.preventDefault();e.stopPropagation();});
+document.getElementById('cancelBtn').addEventListener('touchend', e=>{e.preventDefault();e.stopPropagation();},{passive:false});
+
+// ══════════════════════════════════════════
+//   ★ WORLD CUP
+// ══════════════════════════════════════════
+let wcBracket = [], wcRound = [], wcRoundIdx = 0, wcMatchIdx = 0, wcTotalMatches = 0, wcDoneMatches = 0;
+
+function initWC() {
+  document.getElementById('wcSetup').style.display='block';
+  document.getElementById('wcGame').style.display='none';
+  document.getElementById('wcWinner').style.display='none';
+  renderWCChips();
+}
+
+function renderWCChips() {
+  const c = document.getElementById('wcFoodChips');
+  c.innerHTML = wcFoods.map((f,i)=>`
+    <div class="food-chip ${f.sel!==false?'selected':''}" onclick="wcToggle(${i})">
+      ${f.e} ${f.n} ${f.sel!==false?'✓':''}
+    </div>`).join('');
+}
+
+function wcToggle(i) {
+  wcFoods[i].sel = (wcFoods[i].sel !== false) ? false : true;
+  renderWCChips();
+}
+
+function wcAddFood() {
+  const inp = document.getElementById('wcAddInput');
+  const n = inp.value.trim();
+  if (!n) return;
+  wcFoods.push({e:getEmoji(n), n, sel:true});
+  inp.value='';
+  renderWCChips();
+}
+
+function startWC() {
+  let selected = wcFoods.filter(f=>f.sel!==false);
+  if (selected.length < 2) { alert('최소 2개 이상 선택해주세요!'); return; }
+  // Pad to power of 2
+  while ((selected.length & (selected.length-1)) !== 0 || selected.length < 4)
+    selected = [...selected, selected[Math.floor(Math.random()*selected.length)]];
+  // Shuffle
+  selected = selected.sort(()=>Math.random()-.5);
+  wcRound = [...selected];
+  wcRoundIdx = 0; wcMatchIdx = 0;
+  wcTotalMatches = selected.length - 1;
+  wcDoneMatches = 0;
+  document.getElementById('wcSetup').style.display='none';
+  document.getElementById('wcGame').style.display='flex';
+  document.getElementById('wcWinner').style.display='none';
+  showWCMatch();
+}
+
+function showWCMatch() {
+  if (wcRound.length === 1) { showWCWinner(wcRound[0]); return; }
+  if (wcMatchIdx*2 >= wcRound.length) {
+    // Next round with winners stored in wcBracket
+    wcRound = wcBracket;
+    wcBracket = [];
+    wcMatchIdx = 0;
+    wcRoundIdx++;
+  }
+  const a = wcRound[wcMatchIdx*2], b = wcRound[wcMatchIdx*2+1];
+  const roundNames = ['결승','4강','8강','16강','32강'];
+  const remaining = wcRound.length;
+  const roundLabel = remaining === 2 ? '🏆 결승' :
+    remaining === 4 ? '🥊 4강' :
+    remaining === 8 ? '⚔️ 8강' : `🎮 ${remaining}강`;
+  document.getElementById('wcRoundLabel').textContent = roundLabel;
+  const pct = (wcDoneMatches / wcTotalMatches) * 100;
+  document.getElementById('wcProgressBar').style.width = pct + '%';
+
+  document.getElementById('wcVersus').innerHTML = `
+    <div class="wc-card" onclick="wcPick(0)">
+      <span class="food-emoji">${a.e}</span>
+      <div class="food-name">${a.n}</div>
+    </div>
+    <div class="wc-vs">VS</div>
+    <div class="wc-card" onclick="wcPick(1)">
+      <span class="food-emoji">${b.e}</span>
+      <div class="food-name">${b.n}</div>
+    </div>`;
+}
+
+function wcPick(choice) {
+  const a = wcRound[wcMatchIdx*2], b = wcRound[wcMatchIdx*2+1];
+  wcBracket.push(choice === 0 ? a : b);
+  wcMatchIdx++;
+  wcDoneMatches++;
+  // Animate
+  const v = document.getElementById('wcVersus');
+  v.style.opacity='0';
+  v.style.transform='scale(.9)';
+  setTimeout(()=>{
+    v.style.opacity='1'; v.style.transform='scale(1)'; v.style.transition='.2s ease';
+    if (wcMatchIdx*2 >= wcRound.length && wcBracket.length === 1) {
+      showWCWinner(wcBracket[0]);
+    } else {
+      showWCMatch();
+    }
+  }, 200);
+}
+
+function showWCWinner(food) {
+  document.getElementById('wcGame').style.display='none';
+  document.getElementById('wcWinner').style.display='block';
+  document.getElementById('wcWinnerEmoji').textContent = food.e;
+  document.getElementById('wcWinnerName').textContent = food.n;
+  launchConfetti(20);
+}
+
+function resetWC() {
+  document.getElementById('wcWinner').style.display='none';
+  document.getElementById('wcGame').style.display='none';
+  document.getElementById('wcSetup').style.display='block';
+}
+
+// ══════════════════════════════════════════
+//   ★ GROUP VOTE
+// ══════════════════════════════════════════
+let voteData = {}, voteActive = false;
+
+function initVote() {
+  document.getElementById('voteSetup').style.display='block';
+  document.getElementById('voteRoom').style.display='none';
+  renderVoteChips();
+}
+
+function renderVoteChips() {
+  const c = document.getElementById('voteFoodChips');
+  c.innerHTML = voteFoods.map((f,i)=>`
+    <div class="food-chip ${f.sel!==false?'selected':''}" onclick="voteToggle(${i})">
+      ${f.e} ${f.n} ${f.sel!==false?'✓':''}
+    </div>`).join('');
+}
+
+function voteToggle(i) {
+  voteFoods[i].sel = (voteFoods[i].sel !== false) ? false : true;
+  renderVoteChips();
+}
+
+function voteAddFood() {
+  const inp = document.getElementById('voteAddInput');
+  const n = inp.value.trim();
+  if (!n) return;
+  voteFoods.push({e:getEmoji(n), n, sel:true});
+  inp.value=''; renderVoteChips();
+}
+
+function startVote() {
+  const selected = voteFoods.filter(f=>f.sel!==false);
+  if (selected.length < 2) { alert('최소 2개 선택해주세요!'); return; }
+  // Init vote data
+  voteData = {};
+  selected.forEach(f => { voteData[f.n] = {food:f, voters:[]}; });
+  voteActive = true;
+  const code = Math.random().toString(36).substr(2,5).toUpperCase();
+  document.getElementById('roomCode').textContent = code;
+  document.getElementById('voteSetup').style.display='none';
+  document.getElementById('voteRoom').style.display='block';
+  document.getElementById('voteWinner').style.display='none';
+  renderVoteRoom();
+}
+
+function renderVoteRoom() {
+  const name = document.getElementById('voterName').value.trim() || '익명';
+  const items = Object.values(voteData);
+  const total = items.reduce((s,i)=>s+i.voters.length,0);
+  const myVote = items.find(i=>i.voters.includes(name));
+
+  document.getElementById('voteItemsList').innerHTML = items.map(item=>{
+    const pct = total>0 ? Math.round(item.voters.length/total*100) : 0;
+    const isMine = item.voters.includes(name);
+    return `
+    <div class="vote-item-row">
+      <span class="vote-item-emoji">${item.food.e}</span>
+      <span class="vote-item-name">${item.food.n}</span>
+      <div class="vote-item-bar-wrap">
+        <div class="vote-item-bar" style="width:${pct}%"></div>
+      </div>
+      <span class="vote-item-count">${item.voters.length}표</span>
+      <button class="vote-btn ${myVote?'voted':''}"
+        onclick="${myVote?'':'castVote(\''+item.food.n+'\')'}">
+        ${isMine?'✓ 내 표':myVote?'투표완료':'투표'}
+      </button>
+    </div>`}).join('');
+}
+
+function castVote(foodName) {
+  const name = document.getElementById('voterName').value.trim() || '익명' + Math.floor(Math.random()*100);
+  // Remove existing vote
+  Object.values(voteData).forEach(i=>{
+    i.voters = i.voters.filter(v=>v!==name);
+  });
+  voteData[foodName].voters.push(name);
+  renderVoteRoom();
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function closeVote() {
+  const items = Object.values(voteData).sort((a,b)=>b.voters.length-a.voters.length);
+  const winner = items[0];
+  if (winner.voters.length === 0) { alert('아직 아무도 투표 안 했어요!'); return; }
+  const winDiv = document.getElementById('voteWinner');
+  winDiv.style.display='block';
+  winDiv.innerHTML = `
+    <div class="vote-winner-banner">
+      <span class="w-emoji">${winner.food.e}</span>
+      <div class="w-name">${winner.food.n}</div>
+      <div class="w-sub">${winner.voters.length}표로 오늘의 메뉴 결정! 🎉</div>
+    </div>`;
+  launchConfetti(15);
+}
+
+function resetVote() {
+  voteActive = false;
+  document.getElementById('voteRoom').style.display='none';
+  document.getElementById('voteSetup').style.display='block';
+}
+
+// ══════════════════════════════════════════
+//   ★ ROULETTE
+// ══════════════════════════════════════════
+const ROULETTE_COLORS = ['#FF3B3B','#FF7043','#FFD600','#00C853','#2979FF','#7C4DFF','#FF4081','#00BCD4','#FF6F00','#00897B'];
+let rouletteAngle = 0, rouletteSpinning = false, rouletteItems = [];
+
+function initRNG() {
+  document.getElementById('rngSetup').style.display='block';
+  document.getElementById('rngPlay').style.display='none';
+  renderRNGChips();
+}
+
+function renderRNGChips() {
+  const c = document.getElementById('rngFoodChips');
+  c.innerHTML = rngFoods.map((f,i)=>`
+    <div class="food-chip ${f.sel!==false?'selected':''}" onclick="rngToggle(${i})">
+      ${f.e} ${f.n} ${f.sel!==false?'✓':''}
+    </div>`).join('');
+}
+
+function rngToggle(i) {
+  rngFoods[i].sel = (rngFoods[i].sel !== false) ? false : true;
+  renderRNGChips();
+}
+
+function rngAddFood() {
+  const inp = document.getElementById('rngAddInput');
+  const n = inp.value.trim();
+  if (!n) return;
+  rngFoods.push({e:getEmoji(n), n, sel:true});
+  inp.value=''; renderRNGChips();
+}
+
+function buildRoulette() {
+  rouletteItems = rngFoods.filter(f=>f.sel!==false);
+  if (rouletteItems.length < 2) { alert('최소 2개 선택해주세요!'); return; }
+  document.getElementById('rngSetup').style.display='none';
+  document.getElementById('rngPlay').style.display='block';
+  document.getElementById('rngResultCard').style.display = 'none';
+  document.getElementById('rngHint').style.display = 'block';
+  rouletteAngle = 0;
+  drawRoulette(rouletteAngle);
+}
+
+function drawRoulette(angle) {
+  const canvas = document.getElementById('rouletteCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 140, cy = 140, r = 132;
+  const n = rouletteItems.length;
+  const slice = (Math.PI*2) / n;
+
+  ctx.clearRect(0,0,280,280);
+  rouletteItems.forEach((item, i) => {
+    const start = angle + i * slice - Math.PI/2;
+    const end = start + slice;
+    // Slice
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = ROULETTE_COLORS[i % ROULETTE_COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Text
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(start + slice/2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 13px "Noto Sans KR", sans-serif';
+    ctx.shadowColor='rgba(0,0,0,.5)';
+    ctx.shadowBlur=4;
+    ctx.fillText(item.e + ' ' + item.n, r - 10, 5);
+    ctx.restore();
+  });
+
+  // Center circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, 18, 0, Math.PI*2);
+  ctx.fillStyle = 'white';
+  ctx.fill();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+function spinRoulette() {
+  if (rouletteSpinning) return;
+  rouletteSpinning = true;
+  document.getElementById('spinRouletteBtn').disabled = true;
+
+  // 결과 카드 초기화
+  document.getElementById('rngResultCard').style.display = 'none';
+  document.getElementById('rngHint').style.display = 'none';
+
+  const n = rouletteItems.length;
+  const slice = (Math.PI * 2) / n;
+
+  // ① 당첨 아이템 미리 결정
+  const winIdx = Math.floor(Math.random() * n);
+
+  // ② 해당 칸의 중심이 화살표(상단, -π/2)에 오는 각도를 역산
+  //    drawRoulette에서 slice i의 시작각 = rouletteAngle + i*slice - π/2
+  //    중심각 = rouletteAngle + i*slice + slice/2 - π/2 = -π/2 가 되려면:
+  //    rouletteAngle = -(i*slice + slice/2)
+  const targetBaseAngle = -(winIdx * slice + slice / 2);
+
+  // ③ 최소 5바퀴 + 약간 랜덤 회전 추가
+  const extraRounds = 5 + Math.floor(Math.random() * 4);
+  const finalAngle = targetBaseAngle - extraRounds * Math.PI * 2;
+
+  const duration = 3500 + Math.random() * 1000;
+  const startAngle = rouletteAngle;
+  let start = null;
+
+  function animate(ts) {
+    if (!start) start = ts;
+    const elapsed = ts - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 4);
+    rouletteAngle = startAngle + (finalAngle - startAngle) * eased;
+    drawRoulette(rouletteAngle);
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      rouletteAngle = finalAngle;
+      drawRoulette(rouletteAngle);
+      rouletteSpinning = false;
+      document.getElementById('spinRouletteBtn').disabled = false;
+      // 미리 결정한 winIdx 바로 사용 → 계산 오류 없음
+      showRouletteResult(winIdx);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+function showRouletteResult(winIdx) {
+  const winner = rouletteItems[winIdx];
+
+  // 안내 문구 숨기고 결과 카드 표시
+  document.getElementById('rngHint').style.display = 'none';
+  document.getElementById('rngWinnerEmoji').textContent = winner.e;
+  document.getElementById('rngWinnerName').textContent  = winner.n;
+  const card = document.getElementById('rngResultCard');
+  card.style.display = 'block';
+
+  launchConfetti(12);
+  if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 100]);
+}
+
+function resetRNG() {
+  document.getElementById('rngPlay').style.display='none';
+  document.getElementById('rngSetup').style.display='block';
+}
+
+// ══════════════════════════════════════════
+//   CONFETTI
+// ══════════════════════════════════════════
+function launchConfetti(count) {
+  const items = ['🎉','✨','🎊','🌟','💥','🎈','🍽️','🍗','🍕','💫'];
+  for (let i=0;i<count;i++) {
+    setTimeout(()=>{
+      const el = document.createElement('div');
+      el.className = 'confetti-item';
+      el.textContent = items[Math.floor(Math.random()*items.length)];
+      el.style.left = (5+Math.random()*90)+'vw';
+      el.style.top  = '-40px';
+      el.style.fontSize = (.9+Math.random()*1.5)+'rem';
+      const dur = 1.5+Math.random()*2;
+      el.style.animationDuration = dur+'s';
+      el.style.animationDelay   = (Math.random()*.4)+'s';
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), (dur+.5)*1000);
+    }, i*60);
+  }
+}
+
+// ══════════════════════════════════════════
+//   BOOT — mark all foods as selected by default
+// ══════════════════════════════════════════
+[wcFoods, voteFoods, rngFoods].forEach(arr =>
+  arr.forEach(f => { if (f.sel===undefined) f.sel=true; }));
+
+// Enter key for food add inputs
+['wcAddInput','voteAddInput','rngAddInput'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key==='Enter') {
+      if (id==='wcAddInput')   wcAddFood();
+      if (id==='voteAddInput') voteAddFood();
+      if (id==='rngAddInput')  rngAddFood();
+    }
+  });
+});
+</script>
+</body>
+</html>
