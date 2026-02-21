@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🧗 SENDLIST — 서울 클라이밍 암장 추천</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#111418;
+  --surface:#1C2128;
+  --card:#242B34;
+  --border:#2E3844;
+  --red:#E8391A;
+  --orange:#F56B1F;
+  --chalk:#F0EBE3;
+  --chalk2:#B8B0A8;
+  --blue:#3B82F6;
+  --green:#22C55E;
+  --yellow:#F59E0B;
+  --purple:#A855F7;
+  --text:#E8E4DF;
+  --muted:#7A7570;
+}
+
+html,body{
+  width:100%;min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── 암벽 질감 BG ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(232,57,26,.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(59,130,246,.04) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ════════════════════
+   SCREENS
+════════════════════ */
+.screen{display:none;min-height:100vh;flex-direction:column;
+  align-items:center;padding:0 0 80px;position:relative;z-index:1}
+.screen.on{display:flex}
+
+/* ── 공통 헤더 ── */
+.top-bar{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  background:rgba(17,20,24,.9);backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:100}
+.top-logo{
+  font-family:'Bebas Neue',sans-serif;font-size:1.5rem;
+  color:var(--red);letter-spacing:.08em}
+.back-btn{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:1rem;color:var(--chalk);
+  transition:background .15s}
+.back-btn:active{background:var(--border)}
+
+/* ════════════════════
+   HOME
+════════════════════ */
+#home .hero{
+  width:100%;padding:40px 20px 32px;text-align:center;position:relative}
+.hero-label{
+  font-size:.7rem;letter-spacing:.35em;color:var(--red);
+  font-weight:700;margin-bottom:12px;text-transform:uppercase}
+.hero-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3.5rem,14vw,6rem);
+  line-height:.92;color:var(--chalk);
+  letter-spacing:.04em;margin-bottom:6px}
+.hero-title span{color:var(--red)}
+.hero-sub{
+  font-size:.88rem;color:var(--muted);
+  font-weight:400;line-height:1.6;margin-top:10px}
+
+/* 홀드 장식 */
+.hold{
+  position:absolute;border-radius:50% 40% 55% 45%;
+  opacity:.12}
+.hold1{width:28px;height:22px;background:var(--red);top:30px;left:18px;transform:rotate(-20deg)}
+.hold2{width:18px;height:14px;background:var(--orange);top:55px;right:28px;transform:rotate(15deg)}
+.hold3{width:22px;height:16px;background:var(--blue);bottom:20px;left:40px;transform:rotate(8deg)}
+
+.mode-list{width:100%;max-width:480px;padding:0 16px;display:flex;flex-direction:column;gap:10px}
+
+.mode-btn{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:18px 20px;
+  display:flex;align-items:center;gap:16px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .15s,border-color .15s,box-shadow .15s;
+  text-align:left}
+.mode-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.03),transparent);
+  pointer-events:none}
+.mode-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.mode-btn:active{transform:translateY(1px)}
+.mode-btn.red   {border-color:rgba(232,57,26,.4)}
+.mode-btn.blue  {border-color:rgba(59,130,246,.4)}
+.mode-btn.yellow{border-color:rgba(245,158,11,.4)}
+.mode-btn.green {border-color:rgba(34,197,94,.4)}
+.mode-btn.purple{border-color:rgba(168,85,247,.4)}
+.mode-btn:hover.red   {border-color:var(--red);   box-shadow:0 4px 20px rgba(232,57,26,.2)}
+.mode-btn:hover.blue  {border-color:var(--blue);  box-shadow:0 4px 20px rgba(59,130,246,.2)}
+.mode-btn:hover.yellow{border-color:var(--yellow);box-shadow:0 4px 20px rgba(245,158,11,.2)}
+.mode-btn:hover.green {border-color:var(--green); box-shadow:0 4px 20px rgba(34,197,94,.2)}
+.mode-btn:hover.purple{border-color:var(--purple);box-shadow:0 4px 20px rgba(168,85,247,.2)}
+
+.mode-icon{
+  width:48px;height:48px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.mode-btn.red    .mode-icon{background:rgba(232,57,26,.15)}
+.mode-btn.blue   .mode-icon{background:rgba(59,130,246,.15)}
+.mode-btn.yellow .mode-icon{background:rgba(245,158,11,.15)}
+.mode-btn.green  .mode-icon{background:rgba(34,197,94,.15)}
+.mode-btn.purple .mode-icon{background:rgba(168,85,247,.15)}
+
+.mode-info{flex:1}
+.mode-name{font-weight:700;font-size:1rem;color:var(--chalk);margin-bottom:2px}
+.mode-desc{font-size:.78rem;color:var(--muted)}
+.mode-arrow{font-size:.9rem;color:var(--border);flex-shrink:0}
+
+/* ════════════════════
+   STYLE MATCH
+════════════════════ */
+.section-pad{width:100%;max-width:480px;padding:20px 16px 0}
+.section-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.6rem;
+  color:var(--chalk);letter-spacing:.06em;margin-bottom:4px}
+.section-sub{font-size:.8rem;color:var(--muted);margin-bottom:20px;line-height:1.6}
+
+.style-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  width:100%;max-width:480px;padding:0 16px;margin-bottom:8px}
+.style-card{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:14px;padding:18px 14px;text-align:center;
+  cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.style-card:hover{transform:translateY(-3px)}
+.style-card.selected{border-color:var(--red);background:rgba(232,57,26,.08)}
+.style-card-emoji{font-size:2.2rem;display:block;margin-bottom:8px}
+.style-card-name{font-weight:700;font-size:.95rem;color:var(--chalk);margin-bottom:4px}
+.style-card-desc{font-size:.72rem;color:var(--muted);line-height:1.5}
+.style-card-badge{
+  position:absolute;top:8px;right:8px;
+  background:var(--red);color:white;font-size:.55rem;font-weight:700;
+  padding:2px 7px;border-radius:999px;display:none}
+.style-card.selected .style-card-badge{display:block}
+
+/* 필터 바 */
+.filter-bar{
+  display:flex;gap:6px;width:100%;max-width:480px;
+  padding:0 16px;overflow-x:auto;margin-bottom:16px;
+  scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-chip{
+  flex-shrink:0;background:var(--card);border:1px solid var(--border);
+  border-radius:999px;padding:6px 14px;font-size:.78rem;color:var(--muted);
+  cursor:pointer;transition:all .15s;white-space:nowrap;font-weight:500}
+.filter-chip.on{background:rgba(232,57,26,.15);border-color:var(--red);color:var(--red)}
+
+/* ════════════════════
+   GYM CARD
+════════════════════ */
+.gym-list{width:100%;max-width:480px;padding:0 16px;display:flex;flex-direction:column;gap:12px}
+
+.gym-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:16px;cursor:pointer;
+  transition:all .15s;position:relative;overflow:hidden}
+.gym-card::after{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--red);border-radius:3px 0 0 3px;
+  opacity:0;transition:opacity .15s}
+.gym-card:hover{border-color:rgba(232,57,26,.4);transform:translateX(3px)}
+.gym-card:hover::after{opacity:1}
+
+.gym-card-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.gym-rank{
+  font-family:'Bebas Neue',sans-serif;font-size:1.8rem;
+  color:var(--border);line-height:1;flex-shrink:0;min-width:28px}
+.gym-rank.top1{color:var(--yellow)}
+.gym-rank.top2{color:var(--chalk2)}
+.gym-rank.top3{color:var(--orange)}
+.gym-info{flex:1}
+.gym-name{font-weight:700;font-size:1rem;color:var(--chalk);margin-bottom:3px}
+.gym-addr{font-size:.75rem;color:var(--muted)}
+.gym-match{
+  font-family:'Bebas Neue',sans-serif;font-size:1.3rem;
+  color:var(--red);flex-shrink:0}
+
+.gym-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.gym-tag{
+  background:rgba(255,255,255,.06);border-radius:6px;
+  padding:3px 8px;font-size:.68rem;color:var(--chalk2);font-weight:500}
+.gym-tag.dynamic {background:rgba(232,57,26,.15);color:#FF7A5C}
+.gym-tag.static  {background:rgba(59,130,246,.15); color:#7DB3F8}
+.gym-tag.bouldering{background:rgba(245,158,11,.15);color:#FBC55A}
+.gym-tag.lead    {background:rgba(34,197,94,.15);  color:#5DD98A}
+.gym-tag.beginner{background:rgba(168,85,247,.15); color:#C084FC}
+
+.gym-bars{display:flex;flex-direction:column;gap:5px}
+.gym-bar-row{display:flex;align-items:center;gap:8px}
+.gym-bar-label{font-size:.68rem;color:var(--muted);width:52px;flex-shrink:0}
+.gym-bar-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.gym-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+
+.gym-card-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.gym-price{font-size:.78rem;color:var(--muted)}
+.gym-price span{color:var(--chalk);font-weight:700}
+.gym-detail-btn{
+  font-size:.72rem;font-weight:700;color:var(--red);
+  display:flex;align-items:center;gap:3px}
+
+/* ════════════════════
+   DISTRICT PICKER
+════════════════════ */
+.district-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  width:100%;max-width:480px;padding:0 16px}
+.district-btn{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:9px 4px;text-align:center;
+  cursor:pointer;transition:all .15s}
+.district-btn:hover{border-color:var(--blue);background:rgba(59,130,246,.08)}
+.district-btn.on{border-color:var(--blue);background:rgba(59,130,246,.12);color:var(--blue)}
+.district-btn span{font-size:.78rem;font-weight:500}
+
+/* ════════════════════
+   CLIMBER TEST
+════════════════════ */
+.test-progress{
+  width:100%;max-width:480px;padding:0 16px;margin-bottom:20px}
+.test-prog-bar{
+  width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.test-prog-fill{
+  height:100%;background:linear-gradient(90deg,var(--red),var(--orange));
+  border-radius:2px;transition:width .4s ease}
+.test-prog-label{
+  font-size:.72rem;color:var(--muted);margin-top:6px;text-align:right}
+
+.test-q{
+  width:100%;max-width:480px;padding:0 16px;margin-bottom:20px}
+.test-q-num{
+  font-family:'Bebas Neue',sans-serif;font-size:.85rem;
+  color:var(--red);letter-spacing:.2em;margin-bottom:8px}
+.test-q-text{
+  font-weight:700;font-size:1.1rem;color:var(--chalk);
+  line-height:1.5;margin-bottom:4px}
+.test-q-sub{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+.test-options{
+  width:100%;max-width:480px;padding:0 16px;
+  display:flex;flex-direction:column;gap:8px}
+.test-opt{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:14px;padding:14px 16px;cursor:pointer;
+  transition:all .15s;display:flex;align-items:center;gap:12px}
+.test-opt:hover{border-color:rgba(232,57,26,.5);background:rgba(232,57,26,.05)}
+.test-opt.chosen{border-color:var(--red);background:rgba(232,57,26,.1)}
+.test-opt-emoji{font-size:1.4rem;width:32px;text-align:center;flex-shrink:0}
+.test-opt-text{font-size:.9rem;color:var(--chalk);font-weight:500}
+.test-opt-sub{font-size:.75rem;color:var(--muted);margin-top:2px}
+
+/* 테스트 결과 */
+.test-result{
+  width:100%;max-width:480px;padding:0 16px;
+  animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.result-type-card{
+  background:var(--card);border:2px solid var(--red);
+  border-radius:20px;padding:24px 20px;text-align:center;margin-bottom:20px;
+  position:relative;overflow:hidden}
+.result-type-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at center,rgba(232,57,26,.1),transparent 70%)}
+.result-type-emoji{font-size:3.5rem;display:block;margin-bottom:12px;
+  animation:bounce 2s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.result-type-label{
+  font-size:.7rem;color:var(--red);font-weight:700;
+  letter-spacing:.25em;margin-bottom:6px}
+.result-type-name{
+  font-family:'Bebas Neue',sans-serif;font-size:2.2rem;
+  color:var(--chalk);letter-spacing:.06em;margin-bottom:8px}
+.result-type-desc{font-size:.85rem;color:var(--chalk2);line-height:1.7}
+
+/* ════════════════════
+   RANDOM PICK
+════════════════════ */
+.random-machine{
+  width:100%;max-width:380px;padding:0 16px}
+.random-display{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:20px;padding:28px 20px;text-align:center;
+  margin-bottom:20px;min-height:200px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;transition:border-color .3s}
+.random-display.spinning{border-color:var(--red);
+  animation:randomPulse .3s ease infinite alternate}
+@keyframes randomPulse{from{box-shadow:0 0 0 rgba(232,57,26,0)}to{box-shadow:0 0 20px rgba(232,57,26,.3)}}
+.random-gym-emoji{font-size:3rem;margin-bottom:10px;display:block}
+.random-gym-name{font-family:'Bebas Neue',sans-serif;font-size:2rem;
+  color:var(--chalk);letter-spacing:.06em;margin-bottom:4px}
+.random-gym-addr{font-size:.8rem;color:var(--muted);margin-bottom:12px}
+.random-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+
+.random-btn{
+  width:100%;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;
+  letter-spacing:.08em;background:var(--red);color:white;
+  border:none;border-radius:14px;padding:16px;cursor:pointer;
+  transition:all .15s;position:relative;overflow:hidden}
+.random-btn::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);pointer-events:none}
+.random-btn:hover{background:#c52e12;transform:translateY(-2px);box-shadow:0 8px 20px rgba(232,57,26,.4)}
+.random-btn:active{transform:translateY(1px);box-shadow:none}
+
+/* ════════════════════
+   BATTLE / COMPARE
+════════════════════ */
+.battle-select{
+  display:flex;gap:10px;width:100%;max-width:480px;
+  padding:0 16px;align-items:center;margin-bottom:20px}
+.battle-slot{
+  flex:1;background:var(--card);border:2px dashed var(--border);
+  border-radius:14px;padding:14px 10px;text-align:center;
+  cursor:pointer;transition:all .15s;min-height:80px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center}
+.battle-slot.filled{border-style:solid;border-color:var(--red)}
+.battle-slot-emoji{font-size:1.4rem;margin-bottom:4px}
+.battle-slot-name{font-size:.82rem;font-weight:700;color:var(--chalk)}
+.battle-slot-empty{font-size:.78rem;color:var(--muted)}
+.battle-vs{
+  font-family:'Bebas Neue',sans-serif;font-size:1.6rem;
+  color:var(--border);flex-shrink:0}
+
+.battle-result{
+  width:100%;max-width:480px;padding:0 16px}
+.battle-row{
+  display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.battle-label{font-size:.75rem;color:var(--muted);width:56px;flex-shrink:0;text-align:right}
+.battle-bars{flex:1;display:flex;gap:4px;align-items:center}
+.battle-bar-a,.battle-bar-b{height:10px;border-radius:5px;transition:width .7s ease}
+.battle-bar-a{background:var(--red)}
+.battle-bar-b{background:var(--blue)}
+.battle-val-a{font-size:.72rem;color:var(--red);width:28px;text-align:right;font-weight:700}
+.battle-val-b{font-size:.72rem;color:var(--blue);width:28px;font-weight:700}
+.battle-winner-banner{
+  background:linear-gradient(135deg,rgba(232,57,26,.15),rgba(245,158,11,.1));
+  border:1px solid rgba(232,57,26,.3);border-radius:14px;
+  padding:14px 16px;text-align:center;margin-top:16px}
+.battle-winner-text{
+  font-family:'Bebas Neue',sans-serif;font-size:1.4rem;
+  color:var(--chalk);letter-spacing:.06em}
+.battle-winner-sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+
+/* ════════════════════
+   GYM DETAIL MODAL
+════════════════════ */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;justify-content:center}
+.modal-backdrop.on{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  width:100%;max-width:480px;
+  background:var(--surface);
+  border-radius:24px 24px 0 0;
+  padding:24px 20px 40px;
+  max-height:85vh;overflow-y:auto;
+  animation:slideUp .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{
+  width:40px;height:4px;background:var(--border);
+  border-radius:2px;margin:0 auto 20px}
+.modal-close{
+  position:absolute;top:20px;right:20px;
+  width:32px;height:32px;border-radius:50%;
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.85rem;color:var(--chalk2)}
+.modal-gym-name{
+  font-family:'Bebas Neue',sans-serif;font-size:2rem;
+  color:var(--chalk);letter-spacing:.04em;margin-bottom:4px}
+.modal-gym-addr{font-size:.82rem;color:var(--muted);margin-bottom:16px}
+.modal-section{margin-bottom:18px}
+.modal-section-title{
+  font-size:.7rem;font-weight:700;color:var(--red);
+  letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px}
+.modal-desc{font-size:.88rem;color:var(--chalk2);line-height:1.7}
+.modal-pros{display:flex;flex-direction:column;gap:6px}
+.modal-pro{display:flex;align-items:flex-start;gap:8px;font-size:.85rem;color:var(--chalk2)}
+.modal-pro::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+.modal-hours{
+  background:var(--card);border-radius:10px;padding:12px 14px;
+  font-size:.82rem;color:var(--chalk2);line-height:1.8}
+
+/* ════════════════════
+   공통 유틸
+════════════════════ */
+.pill-btn{
+  font-weight:700;font-size:.9rem;color:white;
+  background:var(--red);border:none;border-radius:12px;
+  padding:13px 28px;cursor:pointer;transition:all .15s;
+  display:inline-flex;align-items:center;gap:6px}
+.pill-btn:hover{background:#c52e12;transform:translateY(-1px)}
+.pill-btn:active{transform:translateY(1px)}
+.pill-btn.blue{background:var(--blue)}
+.pill-btn.blue:hover{background:#2563EB}
+.pill-btn.ghost{background:transparent;border:1.5px solid var(--border);color:var(--chalk2)}
+.pill-btn.ghost:hover{border-color:var(--chalk2);background:rgba(255,255,255,.04)}
+
+.empty-state{
+  text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-state div:first-child{font-size:2.5rem;margin-bottom:12px}
+.empty-state p{font-size:.88rem;line-height:1.6}
+
+/* 스크롤바 */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* 선택 팝업 */
+.select-popup{
+  position:fixed;inset:0;z-index:600;
+  background:rgba(0,0,0,.8);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;justify-content:center}
+.select-popup.on{display:flex;animation:fadeIn .2s ease}
+.select-popup-inner{
+  width:100%;max-width:480px;background:var(--surface);
+  border-radius:24px 24px 0 0;padding:20px 16px 40px;
+  max-height:80vh;overflow-y:auto}
+.select-popup-title{font-weight:700;font-size:1rem;color:var(--chalk);
+  margin-bottom:4px;padding:0 4px}
+.select-popup-sub{font-size:.78rem;color:var(--muted);
+  margin-bottom:16px;padding:0 4px}
+
+/* ════════════════════
+   RANDOM TAG PICKER
+════════════════════ */
+.rand-tag-grid{
+  display:flex;flex-wrap:wrap;gap:8px}
+.rand-tag{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:10px;padding:8px 14px;font-size:.82rem;
+  color:var(--chalk2);font-weight:600;cursor:pointer;
+  transition:all .15s;user-select:none;white-space:nowrap}
+.rand-tag:hover{border-color:var(--red);color:var(--chalk)}
+.rand-tag.on{
+  background:rgba(232,57,26,.12);border-color:var(--red);
+  color:var(--red)}
+.rand-tag.chain-tag.on{
+  background:rgba(var(--chain-r,232),var(--chain-g,57),var(--chain-b,26),.12);
+  border-color:var(--chain-c, var(--red));
+  color:var(--chain-c, var(--red))}
+.rand-tag[data-key="chain_서울숲"].on{background:rgba(34,197,94,.12);border-color:#22C55E;color:#22C55E}
+.rand-tag[data-key="chain_피커스"].on{background:rgba(59,130,246,.12);border-color:#3B82F6;color:#3B82F6}
+.rand-tag[data-key="chain_클라이밍파크"].on{background:rgba(168,85,247,.12);border-color:#A855F7;color:#A855F7}
+.rand-tag[data-key="chain_알레"].on{background:rgba(245,158,11,.12);border-color:#F59E0B;color:#F59E0B}
+.rand-tag[data-key="chain_더클라임"].on{background:rgba(232,57,26,.12);border-color:#E8391A;color:#E8391A}
+.rand-match-zero{color:var(--red) !important}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     HOME
+══════════════════════════════ -->
+<div class="screen on" id="home">
+  <div class="top-bar">
+    <span class="top-logo">SENDLIST</span>
+    <span style="font-size:.7rem;color:var(--muted);font-weight:500">서울 클라이밍 가이드</span>
+  </div>
+
+  <div class="hero">
+    <div class="hold hold1"></div>
+    <div class="hold hold2"></div>
+    <div class="hold hold3"></div>
+    <div class="hero-label">🧗 Seoul Climbing Guide</div>
+    <div class="hero-title">SEND<br><span>IT.</span></div>
+    <div class="hero-sub">내 스타일에 맞는 서울 클라이밍 암장<br>지금 바로 찾아드릴게요</div>
+  </div>
+
+  <div class="mode-list">
+    <div class="mode-btn red" onclick="openScreen('styleScreen')">
+      <div class="mode-icon">⚡</div>
+      <div class="mode-info">
+        <div class="mode-name">스타일별 추천</div>
+        <div class="mode-desc">다이나믹 · 스태틱 · 볼더링 · 리드 취향 맞춤</div>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="mode-btn blue" onclick="openScreen('districtScreen')">
+      <div class="mode-icon">📍</div>
+      <div class="mode-info">
+        <div class="mode-name">내 동네 암장</div>
+        <div class="mode-desc">서울 구 선택 → 가까운 암장 추천</div>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="mode-btn yellow" onclick="openScreen('testScreen')">
+      <div class="mode-icon">🧬</div>
+      <div class="mode-info">
+        <div class="mode-name">클라이머 유형 테스트</div>
+        <div class="mode-desc">5가지 질문으로 나만의 암장 찾기</div>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="mode-btn green" onclick="openScreen('randomScreen')">
+      <div class="mode-icon">🎲</div>
+      <div class="mode-info">
+        <div class="mode-name">오늘의 암장 뽑기</div>
+        <div class="mode-desc">결정 못할 때 랜덤으로 추천받기</div>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="mode-btn purple" onclick="openScreen('battleScreen')">
+      <div class="mode-icon">⚔️</div>
+      <div class="mode-info">
+        <div class="mode-name">암장 배틀</div>
+        <div class="mode-desc">두 암장 스펙 비교 · 어디가 더 나을까?</div>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     STYLE SCREEN
+══════════════════════════════ -->
+<div class="screen" id="styleScreen">
+  <div class="top-bar">
+    <div class="back-btn" onclick="goHome()">←</div>
+    <span class="top-logo">STYLE</span>
+    <div style="width:38px"></div>
+  </div>
+  <div class="section-pad">
+    <div class="section-title">스타일별 추천</div>
+    <div class="section-sub">내 클라이밍 스타일을 골라주세요<br>딱 맞는 암장을 찾아드릴게요</div>
+  </div>
+  <div class="style-grid" id="styleGrid">
+    <div class="style-card" onclick="selectStyle('dynamic')" data-style="dynamic">
+      <span class="style-card-badge">✓</span>
+      <span class="style-card-emoji">💥</span>
+      <div class="style-card-name">다이나믹</div>
+      <div class="style-card-desc">점프·데드포인트<br>파워풀한 무브</div>
+    </div>
+    <div class="style-card" onclick="selectStyle('static')" data-style="static">
+      <span class="style-card-badge">✓</span>
+      <span class="style-card-emoji">🧘</span>
+      <div class="style-card-name">스태틱</div>
+      <div class="style-card-desc">컨트롤·정적인 무브<br>기술 중심</div>
+    </div>
+    <div class="style-card" onclick="selectStyle('bouldering')" data-style="bouldering">
+      <span class="style-card-badge">✓</span>
+      <span class="style-card-emoji">🪨</span>
+      <div class="style-card-name">볼더링</div>
+      <div class="style-card-desc">짧고 강렬하게<br>문제 풀기</div>
+    </div>
+    <div class="style-card" onclick="selectStyle('lead')" data-style="lead">
+      <span class="style-card-badge">✓</span>
+      <span class="style-card-emoji">🎿</span>
+      <div class="style-card-name">리드/탑로프</div>
+      <div class="style-card-desc">높이 올라가는<br>지구력 루트</div>
+    </div>
+  </div>
+
+  <div class="section-pad" style="padding-top:8px">
+    <div class="section-sub" style="font-size:.75rem;margin-bottom:8px">추가 필터</div>
+  </div>
+  <div class="filter-bar" id="styleFilterBar">
+    <div class="filter-chip on" onclick="toggleFilter(this,'all')">전체</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'beginner')">초보 환영</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'large')">대형 짐</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'setting')">세팅 맛집</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'community')">커뮤니티</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'더클라임')">더클라임</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'서울숲')">서울숲</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'피커스')">피커스·훅</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'클라이밍파크')">클라이밍파크</div>
+    <div class="filter-chip" onclick="toggleFilter(this,'알레')">알레클라이밍</div>
+  </div>
+
+  <div class="gym-list" id="styleGymList">
+    <div class="empty-state">
+      <div>⚡</div>
+      <p>위에서 스타일을 선택하면<br>맞는 암장이 나타나요!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     DISTRICT SCREEN
+══════════════════════════════ -->
+<div class="screen" id="districtScreen">
+  <div class="top-bar">
+    <div class="back-btn" onclick="goHome()">←</div>
+    <span class="top-logo">NEARBY</span>
+    <div style="width:38px"></div>
+  </div>
+  <div class="section-pad">
+    <div class="section-title">내 동네 암장</div>
+    <div class="section-sub">사는 구를 선택하면 가장 가까운 암장을 추천해드려요</div>
+  </div>
+  <div class="district-grid" id="districtGrid"></div>
+  <div style="height:20px"></div>
+  <div class="gym-list" id="districtGymList">
+    <div class="empty-state">
+      <div>📍</div>
+      <p>위에서 동네를 선택해주세요</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TEST SCREEN
+══════════════════════════════ -->
+<div class="screen" id="testScreen">
+  <div class="top-bar">
+    <div class="back-btn" onclick="goHome()">←</div>
+    <span class="top-logo">TYPE TEST</span>
+    <div style="width:38px"></div>
+  </div>
+  <div class="section-pad">
+    <div class="section-title">클라이머 유형 테스트</div>
+    <div class="section-sub">5가지 질문에 답하면 딱 맞는 암장 스타일을 알려드려요</div>
+  </div>
+
+  <div class="test-progress">
+    <div class="test-prog-bar"><div class="test-prog-fill" id="testProgFill" style="width:0%"></div></div>
+    <div class="test-prog-label" id="testProgLabel">0 / 5</div>
+  </div>
+
+  <div id="testQuestionArea"></div>
+  <div id="testResultArea" style="display:none"></div>
+</div>
+
+<!-- ══════════════════════════════
+     RANDOM SCREEN
+══════════════════════════════ -->
+<div class="screen" id="randomScreen">
+  <div class="top-bar">
+    <div class="back-btn" onclick="goHome()">←</div>
+    <span class="top-logo">RANDOM</span>
+    <div style="width:38px"></div>
+  </div>
+  <div class="section-pad">
+    <div class="section-title">오늘의 암장 뽑기</div>
+    <div class="section-sub">원하는 특징을 고르면 그 안에서 랜덤으로 추천해드려요</div>
+  </div>
+
+  <!-- 필터 태그 선택 -->
+  <div style="width:100%;max-width:480px;padding:0 16px;margin-bottom:16px">
+    <div style="font-size:.68rem;font-weight:700;color:var(--red);letter-spacing:.2em;margin-bottom:10px">스타일 선택 (복수 가능)</div>
+    <div class="rand-tag-grid" id="randTagGrid">
+      <div class="rand-tag" data-key="dynamic" onclick="toggleRandTag(this)">💥 다이나믹</div>
+      <div class="rand-tag" data-key="static" onclick="toggleRandTag(this)">🧘 스태틱</div>
+      <div class="rand-tag" data-key="bouldering" onclick="toggleRandTag(this)">🪨 볼더링</div>
+      <div class="rand-tag" data-key="lead" onclick="toggleRandTag(this)">🎿 리드</div>
+    </div>
+    <div style="font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.2em;margin:14px 0 10px">조건 선택</div>
+    <div class="rand-tag-grid">
+      <div class="rand-tag" data-key="beginner" onclick="toggleRandTag(this)">🌱 초보 환영</div>
+      <div class="rand-tag" data-key="large" onclick="toggleRandTag(this)">🏢 대형 짐</div>
+      <div class="rand-tag" data-key="setting" onclick="toggleRandTag(this)">✨ 세팅 맛집</div>
+      <div class="rand-tag" data-key="community" onclick="toggleRandTag(this)">👥 커뮤니티</div>
+    </div>
+    <div style="font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.2em;margin:14px 0 10px">체인 선택</div>
+    <div class="rand-tag-grid">
+      <div class="rand-tag" data-key="chain_더클라임" onclick="toggleRandTag(this)" style="--chain-c:#E8391A">🔴 더클라임</div>
+      <div class="rand-tag" data-key="chain_서울숲" onclick="toggleRandTag(this)" style="--chain-c:#22C55E">🌲 서울숲</div>
+      <div class="rand-tag" data-key="chain_피커스" onclick="toggleRandTag(this)" style="--chain-c:#3B82F6">🎬 피커스·훅</div>
+      <div class="rand-tag" data-key="chain_클라이밍파크" onclick="toggleRandTag(this)" style="--chain-c:#A855F7">🎪 클라이밍파크</div>
+      <div class="rand-tag" data-key="chain_알레" onclick="toggleRandTag(this)" style="--chain-c:#F59E0B">🐰 알레클라이밍</div>
+    </div>
+    <div id="randMatchCount" style="font-size:.78rem;color:var(--muted);margin-top:14px;text-align:center;min-height:20px"></div>
+  </div>
+
+  <div class="random-machine">
+    <div class="random-display" id="randomDisplay">
+      <span style="font-size:.9rem;color:var(--muted);line-height:1.7;text-align:center;padding:0 16px">위에서 특징을 고르거나<br>그냥 뽑기를 눌러보세요!</span>
+    </div>
+    <button class="random-btn" id="randomBtn" onclick="pickRandom()">
+      🎲 &nbsp;뽑기!
+    </button>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="pill-btn ghost" style="flex:1;justify-content:center;font-size:.82rem"
+        onclick="pickRandom()">🔄 다시 뽑기</button>
+      <button class="pill-btn ghost" style="flex:1;justify-content:center;font-size:.82rem"
+        onclick="openGymDetail(lastRandomGym)" id="randomDetailBtn" disabled>
+        상세 보기 ›
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     BATTLE SCREEN
+══════════════════════════════ -->
+<div class="screen" id="battleScreen">
+  <div class="top-bar">
+    <div class="back-btn" onclick="goHome()">←</div>
+    <span class="top-logo">BATTLE</span>
+    <div style="width:38px"></div>
+  </div>
+  <div class="section-pad">
+    <div class="section-title">암장 배틀</div>
+    <div class="section-sub">두 암장을 골라 스펙을 비교해보세요</div>
+  </div>
+
+  <div class="battle-select">
+    <div class="battle-slot" id="battleSlotA" onclick="openBattleSelect('A')">
+      <div class="battle-slot-emoji">🔴</div>
+      <div class="battle-slot-empty">암장 선택</div>
+    </div>
+    <div class="battle-vs">VS</div>
+    <div class="battle-slot" id="battleSlotB" onclick="openBattleSelect('B')">
+      <div class="battle-slot-emoji">🔵</div>
+      <div class="battle-slot-empty">암장 선택</div>
+    </div>
+  </div>
+
+  <div class="battle-result" id="battleResult" style="display:none"></div>
+</div>
+
+<!-- ══════════════════════════════
+     GYM DETAIL MODAL
+══════════════════════════════ -->
+<div class="modal-backdrop" id="gymModal" onclick="closeModal(event)">
+  <div class="modal" style="position:relative">
+    <div class="modal-handle"></div>
+    <div class="modal-close" onclick="closeModal()">✕</div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     BATTLE SELECT POPUP
+══════════════════════════════ -->
+<div class="select-popup" id="selectPopup" onclick="closeSelectPopup(event)">
+  <div class="select-popup-inner">
+    <div class="select-popup-title">암장 선택</div>
+    <div class="select-popup-sub">비교할 암장을 골라주세요</div>
+    <div id="selectPopupList" class="gym-list" style="padding:0;gap:8px"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//   GYM DATA — 서울 클라이밍 암장 20곳
+// ══════════════════════════════════════
+const GYMS = [
+  // ── 더클라임 ──────────────────────────────────
+  {
+    id:1, name:'더클라임 강남점', gu:'강남구',
+    address:'강남구 테헤란로8길 21 화인강남빌딩 B1',
+    emoji:'🏢',
+    styles:['bouldering','dynamic'],
+    tags:['볼더링','다이나믹','대형','체인회원권'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',대형:'',체인회원권:''},
+    features:['large','community','beginner'],
+    chain:'더클라임',
+    desc:'신논현역 바로 앞 더클라임 강남점. 볼더링 전문 짐으로 다양한 난이도의 문제가 고루 분포되어 초보자부터 숙련자까지 즐길 수 있다. 더클라임 전 지점 회원권 공용.',
+    pros:['강남역·신논현역 역세권 최상 접근성','다양한 난이도 골고루 분포','더클라임 12개 지점 회원권 공용','샤워실·탈의실 완비'],
+    dynamic:4, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['강남구','서초구','송파구','강동구'],
+  },
+  {
+    id:2, name:'더클라임 양재점', gu:'강남구',
+    address:'강남구 강남대로 364 B1 (양재역 4번출구)',
+    emoji:'🏆',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','대형','킬터보드','서울최대'],
+    tagClasses:{볼더링:'bouldering',대형:'',킬터보드:'dynamic',서울최대:''},
+    features:['large','setting'],
+    chain:'더클라임',
+    desc:'서울 최대 규모의 더클라임 양재점. 슬랩부터 케이브까지 다양한 벽 구성에 킬터보드·지구력벽·트레이닝존까지 갖춰 훈련 환경이 최고. 최근 리뉴얼로 볼더링존이 더 넓어졌다.',
+    pros:['더클라임 전 지점 중 서울 최대 규모','킬터보드·지구력벽·트레이닝존 보유','슬랩·오버행·케이브 다양한 벽 구성','양재역 신분당선 4번출구 도보 2분'],
+    dynamic:4, static:4, bouldering:5, lead:0,
+    beginner:3, space:5, setting:5, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['강남구','서초구','동작구','관악구'],
+  },
+  {
+    id:3, name:'더클라임 신사점', gu:'강남구',
+    address:'강남구 신사동 (신사역 신분당선 인근)',
+    emoji:'🎯',
+    styles:['bouldering','static'],
+    tags:['볼더링','스태틱','고난도','쾌적'],
+    tagClasses:{볼더링:'bouldering',스태틱:'static',고난도:'',쾌적:''},
+    features:['setting'],
+    chain:'더클라임',
+    desc:'더클라임 신사점은 4지점 스타트(손·발 동시 지정) 방식으로 실제 대회와 유사한 정밀한 문제를 경험할 수 있다. 방문객이 적어 쾌적하게 운동 가능하며 중상급자에게 특히 인기.',
+    pros:['4지점 스타트로 대회형 고품질 세팅','타 지점 대비 한산하고 쾌적','문제 간격이 넓어 방해 없이 집중','신분당선 신사역 접근 편리'],
+    dynamic:2, static:5, bouldering:5, lead:0,
+    beginner:2, space:3, setting:5, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['강남구','서초구','용산구','마포구'],
+  },
+  {
+    id:4, name:'더클라임 논현점', gu:'강남구',
+    address:'강남구 논현동 (논현역 인근)',
+    emoji:'🆕',
+    styles:['bouldering','dynamic'],
+    tags:['볼더링','다이나믹','신규오픈','강남권'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',신규오픈:'',강남권:''},
+    features:['large','beginner'],
+    chain:'더클라임',
+    desc:'더클라임 최신 오픈 지점 중 하나인 논현점. 깔끔하고 현대적인 인테리어로 강남 클라이머들의 관심을 받고 있다. 더클라임 회원권으로 전 지점 이용 가능.',
+    pros:['최근 오픈으로 시설 최신','강남 핵심 위치','더클라임 12개 지점 회원권 공용','깔끔한 인테리어'],
+    dynamic:4, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['강남구','서초구','송파구','강동구'],
+  },
+  {
+    id:5, name:'더클라임 연남점', gu:'마포구',
+    address:'마포구 연남동 (홍대입구역 인근)',
+    emoji:'🌿',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','다이나믹','스태틱','커뮤니티'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',스태틱:'static',커뮤니티:''},
+    features:['large','community','beginner'],
+    chain:'더클라임',
+    desc:'홍대·연남 감성이 가득한 더클라임 연남점. 젊고 활기찬 분위기로 서울 서북권 클라이머들이 즐겨 찾는 곳. 더클라임 지점 중에서도 커뮤니티 분위기가 특히 살아있다.',
+    pros:['홍대·연남 감성 입지','젊고 활기찬 클라이밍 커뮤니티','다양한 스타일 세팅 보유','홍대입구역 역세권'],
+    dynamic:4, static:4, bouldering:5, lead:0,
+    beginner:3, space:4, setting:4, community:5,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['마포구','서대문구','은평구','용산구'],
+  },
+  {
+    id:6, name:'더클라임 신림점', gu:'관악구',
+    address:'관악구 신원로 35 (신림역 2호선)',
+    emoji:'🎪',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','대형','380평','초보환영'],
+    tagClasses:{볼더링:'bouldering',대형:'',['380평']:'dynamic',초보환영:'beginner'},
+    features:['large','beginner','community'],
+    chain:'더클라임',
+    desc:'예식장을 개조한 독특한 공간의 더클라임 신림점. 380평 대형 규모로 중앙에 대형 샹들리에가 인상적이다. 5층 지상에 위치해 통창으로 햇살이 풍부하며 수업이 활발하다.',
+    pros:['380평 대형 규모','예식장 개조 독특한 공간','5층 통창 채광 우수','수업 프로그램 풍부'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:5, space:5, setting:4, community:4,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['관악구','동작구','금천구','영등포구'],
+  },
+  {
+    id:7, name:'더클라임 서울대점', gu:'관악구',
+    address:'관악구 (서울대입구역 2호선 인근)',
+    emoji:'📚',
+    styles:['bouldering','static'],
+    tags:['볼더링','스태틱','숙련자위주','소규모'],
+    tagClasses:{볼더링:'bouldering',스태틱:'static',숙련자위주:'',소규모:''},
+    features:['setting'],
+    chain:'더클라임',
+    desc:'더클라임 지점 중 가장 작은 서울대점. 규모는 작지만 세팅 퀄리티는 높아 숙련자들이 선호한다. 리뉴얼이 안 돼 세족실은 없지만 서울대입구역 접근성이 좋다.',
+    pros:['서울대입구역 역세권','숙련자 클라이머들의 단골 공간','더클라임 12개 지점 회원권 공용','조용하고 집중하기 좋은 환경'],
+    dynamic:2, static:4, bouldering:4, lead:0,
+    beginner:2, space:2, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['관악구','동작구','금천구','서초구'],
+  },
+  {
+    id:8, name:'더클라임 사당점', gu:'동작구',
+    address:'동작구 (사당역 2·4호선 인근)',
+    emoji:'🚇',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','다이나믹','스태틱','교통요지'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',스태틱:'static',교통요지:''},
+    features:['large','beginner'],
+    chain:'더클라임',
+    desc:'2·4호선 환승역인 사당역 인근의 더클라임 사당점. 최근 오픈한 지점으로 시설이 깔끔하다. 연남·신림보다는 작고 홍대·서울대보다는 넓은 중간 규모. 직벽부터 오버행까지 다양하다.',
+    pros:['사당역 2·4호선 교통 요지','최근 오픈으로 시설 깔끔','직벽·오버행 다양한 벽 구성','초보자·숙련자 모두 환영'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:3, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['동작구','관악구','서초구','영등포구'],
+  },
+  {
+    id:9, name:'더클라임 이수점', gu:'동작구',
+    address:'동작구 (이수역 7번출구 도보 5분)',
+    emoji:'✨',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','신규오픈','이수역','깔끔'],
+    tagClasses:{볼더링:'bouldering',신규오픈:'',이수역:'',깔끔:''},
+    features:['large','beginner'],
+    chain:'더클라임',
+    desc:'이수역 7번출구 도보 5분 거리의 더클라임 이수점. 웨딩홀을 개조한 넓은 공간이 특징. 오픈 이벤트로 다양한 프로그램을 운영하며 이수·사당 권역 새 클라이밍 명소.',
+    pros:['7호선 이수역 도보 5분','웨딩홀 개조 대형 공간','오픈 이벤트 프로그램 활발','더클라임 12개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 08:00 – 24:00\n주말 08:00 – 22:00',
+    nearbyGu:['동작구','관악구','서초구','영등포구'],
+  },
+  {
+    id:10, name:'더클라임 마곡점', gu:'강서구',
+    address:'강서구 마곡동로 62 (마곡나루역 인근)',
+    emoji:'🌆',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','마곡','직장인','깔끔'],
+    tagClasses:{볼더링:'bouldering',마곡:'',직장인:'',깔끔:''},
+    features:['large','beginner'],
+    chain:'더클라임',
+    desc:'마곡 신도시 한복판의 더클라임 마곡점. IT·바이오 기업 밀집 지역 직장인들이 퇴근 후 즐겨 찾는다. 신설 지점으로 깨끗한 시설과 최신 인테리어가 특징.',
+    pros:['마곡 첨단 기업단지 직장인 편의','최신 인테리어와 깔끔한 시설','마곡나루역 역세권','더클라임 12개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['강서구','양천구','구로구','영등포구'],
+  },
+  {
+    id:11, name:'더클라임 문래점', gu:'영등포구',
+    address:'영등포구 당산로 63 (문래역 인근)',
+    emoji:'⚙️',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','문래','다이나믹','직장인'],
+    tagClasses:{볼더링:'bouldering',문래:'',다이나믹:'dynamic',직장인:''},
+    features:['large','beginner','community'],
+    chain:'더클라임',
+    desc:'문래 창작촌 감성이 물씬 풍기는 더클라임 문래점. 2호선 문래역 인근으로 영등포·여의도 직장인 접근이 편리하다. 더클라임 전 지점 회원권으로 이용 가능.',
+    pros:['문래역 2호선 역세권','영등포·여의도 직장인 접근 편리','문래 창작촌 감성 주변 환경','더클라임 12개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:4,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['영등포구','구로구','동작구','마포구'],
+  },
+  // ── 서울숲 클라이밍 ───────────────────────────
+  {
+    id:12, name:'서울숲클라이밍 뚝섬점', gu:'성동구',
+    address:'성동구 성수일로 19 유한타워 B2 (뚝섬역·서울숲역)',
+    emoji:'🌲',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','성수','초보환영','체인회원권'],
+    tagClasses:{볼더링:'bouldering',성수:'',초보환영:'beginner',체인회원권:''},
+    features:['beginner','community'],
+    chain:'서울숲',
+    desc:'서울숲 클라이밍의 본점격인 뚝섬점. 150평 규모로 매주 새롭게 문제를 세팅하여 항상 새로운 경험을 제공한다. 초보자 전용 체험 강습 공간이 별도로 마련되어 있어 클라이밍 입문에 최적.',
+    pros:['매주 전면 세팅 교체','초보자 전용 체험 강습 공간','뚝섬역·서울숲역 더블 역세권','서울숲 5개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:5, space:3, setting:4, community:4,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 22:00',
+    nearbyGu:['성동구','광진구','중구','동대문구'],
+  },
+  {
+    id:13, name:'서울숲클라이밍 영등포점', gu:'영등포구',
+    address:'영등포구 (문래역 도보 10~15분, 300평)',
+    emoji:'🏗️',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','300평','대형','직장인'],
+    tagClasses:{볼더링:'bouldering',['300평']:'',대형:'',직장인:''},
+    features:['large','beginner'],
+    chain:'서울숲',
+    desc:'300평 규모의 대형 서울숲클라이밍 영등포점. 직사각형 형태로 길고 넓게 구성되어 양 옆에는 다양한 벽이, 중앙에는 계단 모양 포토존과 휴게공간이 마련되어 있다. 플랫벽과 오버행이 균형 있게 배치.',
+    pros:['300평 대형 규모','플랫벽·오버행 균형 배치','중앙 포토존·휴게공간','서울숲 5개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:5, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 11:00 – 23:00\n주말 10:00 – 23:00',
+    nearbyGu:['영등포구','구로구','동작구','마포구'],
+  },
+  {
+    id:14, name:'서울숲클라이밍 구로점', gu:'구로구',
+    address:'구로구 디지털로 300 B1 (구로디지털단지역 3번출구 도보 10분)',
+    emoji:'💼',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','360평','서울최대','G밸리'],
+    tagClasses:{볼더링:'bouldering',['360평']:'',서울최대:'dynamic',['G밸리']:''},
+    features:['large','beginner'],
+    chain:'서울숲',
+    desc:'360평으로 서울 최대급 규모를 자랑하는 서울숲클라이밍 구로점. 층고가 높아 시원하고 쾌적하다. G밸리(구로디지털단지) 직장인들의 최애 클라이밍 짐.',
+    pros:['360평 서울 최대급 규모','높은 층고로 쾌적한 환경','G밸리 직장인 접근 편리','서울숲 5개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:5, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 11:00 – 23:00\n주말 10:00 – 23:00',
+    nearbyGu:['구로구','금천구','영등포구','관악구'],
+  },
+  {
+    id:15, name:'서울숲클라이밍 잠실점', gu:'송파구',
+    address:'송파구 (잠실·석촌호수 인근)',
+    emoji:'🏟️',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','잠실','대형','신규'],
+    tagClasses:{볼더링:'bouldering',잠실:'',대형:'',신규:''},
+    features:['large','beginner'],
+    chain:'서울숲',
+    desc:'서울숲 클라이밍의 최신 지점인 잠실점. 잠실·석촌 주거 밀집 지역 클라이머들을 위한 공간. 최근 오픈으로 깨끗한 시설과 서울숲 특유의 체계적인 세팅 시스템을 자랑한다.',
+    pros:['잠실·석촌 주거지 접근 편리','최신 오픈 깨끗한 시설','서울숲 5개 지점 회원권 공용','강동·송파 지역 대표 클라이밍짐'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 11:00 – 23:00\n주말 10:00 – 23:00',
+    nearbyGu:['송파구','강동구','강남구','성동구'],
+  },
+  {
+    id:16, name:'서울숲클라이밍 종로점', gu:'종로구',
+    address:'종로구 수표로 96 B1 (종로3가역 인근)',
+    emoji:'🏯',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','종로','도심','대형'],
+    tagClasses:{볼더링:'bouldering',종로:'',도심:'dynamic',대형:''},
+    features:['large','beginner'],
+    chain:'서울숲',
+    desc:'서울 역사 중심가 종로에 자리한 서울숲클라이밍 종로점. 종로3가역 인근으로 도심 직장인과 관광객 모두 접근하기 좋다. 최근 오픈으로 시설이 넓고 쾌적하다.',
+    pros:['종로3가역 접근 편리','서울 도심 중심부 위치','최근 오픈으로 시설 쾌적','서울숲 5개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 11:00 – 23:00\n주말 10:00 – 23:00',
+    nearbyGu:['종로구','중구','성동구','용산구'],
+  },
+  // ── 피커스 클라이밍 (CGV) ─────────────────────
+  {
+    id:17, name:'피커스 클라이밍 종로점', gu:'종로구',
+    address:'종로구 종로 6가 CGV B4 (종로3가역 2번출구)',
+    emoji:'🎬',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','CGV개조','아일랜드탑아웃','독특한구조'],
+    tagClasses:{볼더링:'bouldering',['CGV개조']:'',아일랜드탑아웃:'dynamic',독특한구조:''},
+    features:['large','setting','community'],
+    chain:'피커스',
+    desc:'CJ CGV 영화관을 클라이밍 짐으로 개조한 피커스 종로점. 3호선 종로3가역 출구와 직결되어 지상으로 나오지 않아도 입장 가능. 중앙에 탑아웃 가능한 아일랜드 구조물이 독특한 볼더링 경험을 제공.',
+    pros:['종로3가역 지하철 직결 입장','탑아웃 가능한 아일랜드 구조 독특','피커스+훅클라이밍 5개 지점 회원권 공용','샤워실·탈의실 완비'],
+    dynamic:3, static:4, bouldering:5, lead:0,
+    beginner:3, space:4, setting:5, community:4,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 22:00',
+    nearbyGu:['종로구','중구','성동구','용산구'],
+  },
+  {
+    id:18, name:'피커스 클라이밍 구로점', gu:'구로구',
+    address:'구로구 구로중앙로 152 NC신구로점 6층 (구로역)',
+    emoji:'🎮',
+    styles:['bouldering','dynamic'],
+    tags:['볼더링','컴피벽','다이나믹','NC백화점'],
+    tagClasses:{볼더링:'bouldering',컴피벽:'dynamic',다이나믹:'dynamic',['NC백화점']:''},
+    features:['large','setting','community'],
+    chain:'피커스',
+    desc:'NC신구로점 백화점 6층에 자리한 피커스 구로점. 쇼핑 후 클라이밍 원스톱이 가능하다. 특히 컴피벽(competition wall)이 유명해 이를 즐기러 일부러 방문하는 클라이머들이 많다.',
+    pros:['NC신구로 백화점 6층 원스톱','컴피벽 전용 대형 홀드 문제','구로역 인근 접근 편리','피커스+훅클라이밍 5개 지점 회원권 공용'],
+    dynamic:5, static:2, bouldering:5, lead:0,
+    beginner:3, space:4, setting:5, community:4,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['구로구','금천구','영등포구','관악구'],
+  },
+  {
+    id:19, name:'피커스 클라이밍 신촌점', gu:'서대문구',
+    address:'서대문구 신촌로 129 CGV 신촌 아트레온 11층',
+    emoji:'🎭',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','층고높음','CGV개조','대학가'],
+    tagClasses:{볼더링:'bouldering',층고높음:'dynamic',['CGV개조']:'',대학가:''},
+    features:['large','beginner','community'],
+    chain:'피커스',
+    desc:'CGV 신촌 아트레온 11층에 자리한 피커스 신촌점. 높은 층고 덕분에 시원한 클라이밍 환경을 제공한다. 연세대·이화여대 학생들과 신촌 직장인들로 활기찬 분위기. 3호점으로 가장 최신 시설.',
+    pros:['CGV 11층 높은 층고로 쾌적','신촌역·이대역 양쪽 접근 가능','대학가 특유의 젊고 활기찬 분위기','피커스+훅클라이밍 5개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:5,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 20:00',
+    nearbyGu:['서대문구','마포구','은평구','종로구'],
+  },
+  // ── 훅클라이밍 (피커스 제휴) ─────────────────
+  {
+    id:20, name:'훅클라이밍 왕십리점', gu:'성동구',
+    address:'성동구 (왕십리역 9번출구 인근)',
+    emoji:'🪝',
+    styles:['bouldering','static'],
+    tags:['볼더링','스태틱','고난도','피커스제휴'],
+    tagClasses:{볼더링:'bouldering',스태틱:'static',고난도:'',피커스제휴:''},
+    features:['setting'],
+    chain:'피커스',
+    desc:'피커스 제휴 암장인 훅클라이밍 왕십리점. 스태틱 문제가 많고 전반적으로 난이도가 높다는 평이 많다. 클라이머들 사이에서 "겸손해지는 암장"으로 통하며 실력을 키우기 좋은 곳.',
+    pros:['스태틱 테크니컬 세팅 특화','피커스·훅 5개 지점 회원권 공용','왕십리역 접근 편리','고난도 문제로 실력 성장'],
+    dynamic:2, static:5, bouldering:5, lead:0,
+    beginner:2, space:3, setting:5, community:3,
+    price:'20,000원 (1일)', hours:'평일 11:00 – 23:00\n주말 11:00 – 22:00',
+    nearbyGu:['성동구','광진구','중구','동대문구'],
+  },
+  {
+    id:21, name:'훅클라이밍 성수점', gu:'성동구',
+    address:'성동구 성수동 (성수역 인근)',
+    emoji:'🌟',
+    styles:['bouldering','static'],
+    tags:['볼더링','스태틱','성수감성','피커스제휴'],
+    tagClasses:{볼더링:'bouldering',스태틱:'static',성수감성:'',피커스제휴:''},
+    features:['setting','community'],
+    chain:'피커스',
+    desc:'성수동 힙한 감성 속에 자리한 훅클라이밍 성수점. 피커스 제휴 암장으로 피커스 회원권으로 이용 가능. 성수 특유의 감성적인 공간 디자인과 테크니컬한 세팅이 인상적.',
+    pros:['성수동 힙한 감성 공간','피커스·훅 5개 지점 회원권 공용','스태틱 테크니컬 세팅','성수역 접근 편리'],
+    dynamic:2, static:5, bouldering:5, lead:0,
+    beginner:2, space:3, setting:5, community:4,
+    price:'20,000원 (1일)', hours:'평일 11:00 – 23:00\n주말 11:00 – 22:00',
+    nearbyGu:['성동구','광진구','중구','동대문구'],
+  },
+  // ── 클라이밍파크 ──────────────────────────────
+  {
+    id:22, name:'클라이밍파크 강남점', gu:'강남구',
+    address:'강남구 강남대로 364 B1 (강남역 4번출구 바로 앞)',
+    emoji:'🏙️',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','다이나믹','250평','강남역직결'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',['250평']:'',강남역직결:''},
+    features:['large','beginner','setting'],
+    chain:'클라이밍파크',
+    desc:'강남역 신분당선 4번출구 바로 앞, 접근성이 서울 최고 수준인 클라이밍파크 강남점. 250평 규모로 클라이밍파크 지점 중 가장 최근 오픈해 인테리어가 가장 예쁘다.',
+    pros:['강남역 4번출구 바로 앞 최상 접근성','250평 규모 넓은 공간','클라이밍파크 4개 지점 회원권 공용','가장 최근 오픈 예쁜 인테리어'],
+    dynamic:4, static:3, bouldering:5, lead:0,
+    beginner:4, space:4, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 09:00 – 23:00\n주말 10:00 – 21:00',
+    nearbyGu:['강남구','서초구','송파구','동작구'],
+  },
+  {
+    id:23, name:'클라이밍파크 신논현점', gu:'강남구',
+    address:'강남구 역삼동 충림빌딩 B3 (신논현역 5번출구)',
+    emoji:'🎪',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','신논현','B3층','강남권'],
+    tagClasses:{볼더링:'bouldering',신논현:'',['B3층']:'',강남권:''},
+    features:['large','beginner'],
+    chain:'클라이밍파크',
+    desc:'신논현역 5번출구 인근 충림빌딩 지하 3층에 자리한 클라이밍파크 신논현점. 강남 클라이밍 수요를 충족하는 주요 지점. 클라이밍파크 4개 지점 회원권 공용.',
+    pros:['신논현역 5번출구 도보 5분','강남 핵심 상권 위치','클라이밍파크 4개 지점 회원권 공용','다양한 난이도 세팅'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:3, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 21:00',
+    nearbyGu:['강남구','서초구','용산구','마포구'],
+  },
+  {
+    id:24, name:'클라이밍파크 종로점', gu:'종로구',
+    address:'종로구 (종로5가역 1번출구 도보 5분)',
+    emoji:'🏮',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','종로','도심','클라이밍파크'],
+    tagClasses:{볼더링:'bouldering',종로:'',도심:'',클라이밍파크:''},
+    features:['beginner'],
+    chain:'클라이밍파크',
+    desc:'종로5가역 1번출구에서 도보 5분 거리의 클라이밍파크 종로점. 대로변 계단으로 바로 내려가는 지하1층에 위치. 서울페이 결제도 가능하며 도심 직장인과 종로 방문객에게 편리.',
+    pros:['종로5가역 도보 5분','대로변 간판으로 찾기 쉬움','서울페이 결제 가능','클라이밍파크 4개 지점 회원권 공용'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:3, setting:4, community:3,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 21:00',
+    nearbyGu:['종로구','중구','성동구','용산구'],
+  },
+  {
+    id:25, name:'클라이밍파크 성수점', gu:'성동구',
+    address:'성동구 성수동 (성수역 인근)',
+    emoji:'🔧',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','성수','대형','클라이밍파크'],
+    tagClasses:{볼더링:'bouldering',성수:'',대형:'',클라이밍파크:''},
+    features:['large','beginner'],
+    chain:'클라이밍파크',
+    desc:'성수동 한복판에 자리한 클라이밍파크 성수점. 지하~3층에 걸친 대형 공간으로 성수 클라이밍 씬의 핵심 거점. 클라이밍파크 4개 지점 회원권으로 이용 가능.',
+    pros:['성수동 대형 멀티층 공간','성수역 접근 편리','클라이밍파크 4개 지점 회원권 공용','성수 클라이밍 커뮤니티 활성화'],
+    dynamic:3, static:3, bouldering:5, lead:0,
+    beginner:4, space:5, setting:4, community:4,
+    price:'20,000원 (1일)', hours:'평일 10:00 – 23:00\n주말 10:00 – 21:00',
+    nearbyGu:['성동구','광진구','중구','동대문구'],
+  },
+  // ── 오프더월 ──────────────────────────────────
+  {
+    id:26, name:'오프더월 클라이밍 이태원점', gu:'용산구',
+    address:'용산구 이태원로 190 지하 2층 (이태원역 3번출구 도보 1분, 무신사 스튜디오 건물)',
+    emoji:'🎧',
+    styles:['bouldering','dynamic','static'],
+    tags:['볼더링','다이나믹','힙한감성','이태원'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',힙한감성:'',이태원:''},
+    features:['setting','community'],
+    desc:'2024년 6월 이태원역 바로 앞 무신사 스튜디오 건물 지하 2층에 오픈한 230평 규모의 암장. 어두운 조명과 힙한 인테리어가 이태원 분위기와 딱 맞다. 다이나믹과 스태틱 밸런스가 좋고 신장에 관계없이 즐길 수 있는 거리감 세팅이 특징. DJ 페스티벌, 아크테릭스 콜라보 등 이벤트도 활발하다.',
+    pros:['이태원역 3번출구 도보 1분 초역세권','힙한 다크 인테리어·BGM','다이나믹+스태틱 밸런스 세팅','DJ 페스티벌 등 이벤트 활발'],
+    dynamic:4, static:4, bouldering:5, lead:0,
+    beginner:3, space:3, setting:4, community:4,
+    price:'20,000원 (1일)', hours:'평일 11:00 – 23:00\n주말·공휴일 10:00 – 20:00',
+    nearbyGu:['용산구','중구','마포구','서초구'],
+  },
+  // ── 알레 클라이밍 ─────────────────────────────
+  {
+    id:27, name:'알레 클라이밍 영등포점', gu:'영등포구',
+    address:'영등포구 (영등포시장역 도보 5분 · 영등포역 도보 10–15분, 빌라 지하 1층)',
+    emoji:'🐰',
+    styles:['bouldering','dynamic'],
+    tags:['볼더링','다이나믹','알레동산','소규모'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',알레동산:'',소규모:''},
+    features:['beginner','community'],
+    chain:'알레',
+    desc:'알레클라이밍의 모든 지점은 다이나믹 세팅으로 유명하다. "알레동산", "뛰뛰동산"이라는 별명처럼 낮은 난이도에도 다이나믹한 동작이 포함되어 다이노·점프무브 입문에 최적. 영등포점은 소규모지만 문제가 밀도 있게 세팅되어 있고 스태프가 친절하게 케어해준다. 알레 3개 지점 회원권 공용.',
+    pros:['다이나믹 무브 입문에 최적','낮은 난이도도 점프·다이노 포함','스태프 친절한 케어','알레 3개 지점 회원권 공용'],
+    dynamic:5, static:2, bouldering:5, lead:0,
+    beginner:4, space:2, setting:4, community:4,
+    price:'20,000원 (1일)', hours:'평일 12:00 – 23:00\n주말 11:00 – 21:00',
+    nearbyGu:['영등포구','구로구','동작구','마포구'],
+  },
+  {
+    id:28, name:'알레 클라이밍 혜화점', gu:'종로구',
+    address:'종로구 (혜화역 4번출구 도보 5분, 지하 2층)',
+    emoji:'🌸',
+    styles:['bouldering','dynamic'],
+    tags:['볼더링','다이나믹','대학로','알레동산'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',대학로:'',알레동산:''},
+    features:['community'],
+    chain:'알레',
+    desc:'혜화역 4번출구 도보 5분의 알레클라이밍 혜화점. 영등포점보다 두 배 정도 넓은 볼더링 공간에 1~4섹터로 구분되어 있다. 대학로 분위기답게 활기차고 다양한 연령대가 섞인 커뮤니티. 다이나믹 세팅 특화 암장으로 점프·다이노 위주의 문제를 즐길 수 있다.',
+    pros:['혜화역 도보 5분 대학로 위치','영등포점보다 넓은 볼더링 공간','1~4섹터 구분된 체계적 구성','대학로 활기찬 분위기'],
+    dynamic:5, static:2, bouldering:5, lead:0,
+    beginner:3, space:3, setting:4, community:5,
+    price:'20,000원 (1일)', hours:'평일 12:00 – 23:00\n주말 11:00 – 21:00',
+    nearbyGu:['종로구','성북구','동대문구','중구'],
+  },
+  {
+    id:29, name:'알레 클라이밍 강동점', gu:'강동구',
+    address:'강동구 천호대로177길 39 지하 2층',
+    emoji:'⚡',
+    styles:['bouldering','dynamic'],
+    tags:['볼더링','다이나믹','강동권','알레동산'],
+    tagClasses:{볼더링:'bouldering',다이나믹:'dynamic',강동권:'',알레동산:''},
+    features:['community','beginner'],
+    chain:'알레',
+    desc:'강동구 천호대로 인근 알레클라이밍 강동점. 강동·천호 권역에서 알레클라이밍의 다이나믹 세팅을 즐길 수 있는 지점. 서울 동부권 클라이머들이 점프·다이노 무브를 연습하기 위해 찾는 곳. 알레 3개 지점 회원권 공용.',
+    pros:['강동·천호 동부권 알레 지점','점프·다이노 다이나믹 세팅 전문','알레 3개 지점 회원권 공용','강동구 접근 편리'],
+    dynamic:5, static:2, bouldering:5, lead:0,
+    beginner:4, space:3, setting:4, community:4,
+    price:'20,000원 (1일)', hours:'평일 12:00 – 23:00\n주말 11:00 – 21:00',
+    nearbyGu:['강동구','송파구','광진구','성동구'],
+  },
+];
+
+const DISTRICTS = [
+  '종로구','중구','용산구','성동구','광진구','동대문구','중랑구',
+  '성북구','강북구','도봉구','노원구','은평구','서대문구','마포구',
+  '양천구','강서구','구로구','금천구','영등포구','동작구','관악구',
+  '서초구','강남구','송파구','강동구'
+];
+
+// ══════════════════════════════════════
+//   TEST DATA
+// ══════════════════════════════════════
+const TEST_QUESTIONS = [
+  {
+    num:1, text:'클라이밍에서 가장 짜릿한 순간은?',
+    sub:'솔직하게 고르세요!',
+    options:[
+      {e:'💥',text:'점프해서 홀드 잡았을 때!',sub:'데드포인트·다이노가 최고',val:{dynamic:3}},
+      {e:'🧘',text:'완벽한 무게중심으로 버텼을 때',sub:'컨트롤이 살아있음',val:{static:3}},
+      {e:'🧩',text:'어려운 문제 풀어냈을 때',sub:'풋워크·시퀀스 완성',val:{bouldering:2,static:1}},
+      {e:'🏔️',text:'높이 올라가서 내려다봤을 때',sub:'리드 클라이밍 감성',val:{lead:3}},
+    ]
+  },
+  {
+    num:2, text:'선호하는 암장 분위기는?',
+    sub:'솔직하게!',
+    options:[
+      {e:'🎉',text:'활기차고 에너지 넘치는 곳',sub:'사람들과 소통하며 운동',val:{community:2,dynamic:1}},
+      {e:'🎧',text:'조용하고 집중하기 좋은 곳',sub:'나만의 시간에 집중',val:{static:2,setting:1}},
+      {e:'🏠',text:'집 근처 편하게 갈 수 있는 곳',sub:'접근성이 최우선',val:{nearby:2}},
+      {e:'📸',text:'감성 있고 사진 찍기 좋은 곳',sub:'인스타 감성 중요',val:{setting:2}},
+    ]
+  },
+  {
+    num:3, text:'나의 클라이밍 실력은?',
+    sub:'현재 기준으로!',
+    options:[
+      {e:'🌱',text:'이제 막 시작했어요',sub:'기초부터 차근차근',val:{beginner:3}},
+      {e:'📈',text:'기초는 알고 레벨 올리는 중',sub:'중급 진입 단계',val:{beginner:1,setting:1}},
+      {e:'💪',text:'나름 잘 탄다고 생각해요',sub:'중급자',val:{setting:2,dynamic:1}},
+      {e:'🏆',text:'어려운 문제도 거뜬해요',sub:'고급자',val:{setting:3,lead:1}},
+    ]
+  },
+  {
+    num:4, text:'클라이밍 말고 가장 중요한 것은?',
+    sub:'암장 선택 기준!',
+    options:[
+      {e:'💸',text:'가격이 합리적이어야 해',sub:'가성비 클라이머',val:{beginner:1}},
+      {e:'🌟',text:'세팅 퀄리티가 최우선',sub:'문제 퀄리티 집착',val:{setting:3}},
+      {e:'👥',text:'같이 운동할 친구 사귀고 싶어',sub:'커뮤니티 중시',val:{community:3}},
+      {e:'🏋️',text:'시설이 좋아야 해',sub:'샤워실·주차 등',val:{large:2}},
+    ]
+  },
+  {
+    num:5, text:'언제 주로 운동하나요?',
+    sub:'생활 패턴!',
+    options:[
+      {e:'🌞',text:'평일 낮 여유롭게',sub:'한산한 시간대 선호',val:{nearby:1}},
+      {e:'🌆',text:'평일 저녁 퇴근 후',sub:'직장인 패턴',val:{large:1}},
+      {e:'🌙',text:'늦은 밤 야간 운동',sub:'올빼미형',val:{h24:2}},
+      {e:'🗓️',text:'주말에 집중해서',sub:'주말 클라이머',val:{community:1,dynamic:1}},
+    ]
+  },
+];
+
+// 점수 → 클라이머 유형 매핑
+const CLIMBER_TYPES = {
+  dynamic:{
+    name:'파워 다이나믹 클라이머',
+    emoji:'💥',
+    desc:'점프와 데드포인트를 즐기는 파워형 클라이머. 강렬한 무브에서 짜릿함을 느끼며 다이나믹한 세팅을 좋아해요. 근력과 순발력이 강점!',
+    gymFilter: g => g.dynamic >= 4,
+    tags:['다이나믹','볼더링'],
+  },
+  static:{
+    name:'테크니컬 스태틱 클라이머',
+    emoji:'🧘',
+    desc:'정교한 무게중심과 완벽한 풋워크로 조용히 올라가는 기술형 클라이머. 어려운 시퀀스를 분석하고 풀어내는 재미에 빠져있어요.',
+    gymFilter: g => g.static >= 4,
+    tags:['스태틱','볼더링'],
+  },
+  lead:{
+    name:'하이클라이머',
+    emoji:'🏔️',
+    desc:'높은 곳을 향해 올라가는 것을 좋아하는 리드 클라이머. 지구력과 담대함이 특징. 높이에서 느끼는 성취감이 클라이밍의 핵심이에요.',
+    gymFilter: g => g.lead >= 4,
+    tags:['리드','볼더링'],
+  },
+  beginner:{
+    name:'성장하는 클라이머',
+    emoji:'🌱',
+    desc:'이제 막 클라이밍의 매력에 빠진 신입 클라이머. 편안하고 친절한 환경에서 기초를 쌓는 중. 모든 게 새롭고 설레는 단계예요!',
+    gymFilter: g => g.beginner >= 4,
+    tags:['초보환영','볼더링'],
+  },
+  setting:{
+    name:'세팅 고집 클라이머',
+    emoji:'🎨',
+    desc:'세팅 퀄리티에 진심인 클라이머. 잘 만들어진 문제를 만나면 행복하고, 세터의 의도를 읽어내는 재미를 아는 수준급 클라이머.',
+    gymFilter: g => g.setting >= 4,
+    tags:['세팅맛집','볼더링'],
+  },
+  community:{
+    name:'소셜 클라이머',
+    emoji:'🎉',
+    desc:'운동도 운동이지만 사람이 좋아서 암장에 가는 클라이머. 같이 응원하고 팁 나누고, 운동 후 같이 밥 먹는 그 문화가 진짜 클라이밍.',
+    gymFilter: g => g.community >= 4,
+    tags:['커뮤니티','볼더링'],
+  },
+};
+
+// ══════════════════════════════════════
+//   STATE
+// ══════════════════════════════════════
+let selectedStyle = null;
+let selectedDistrict = null;
+let activeFilter = 'all';
+let testAnswers = {};
+let testStep = 0;
+let battleGymA = null, battleGymB = null;
+let lastRandomGym = null;
+let battleSelectTarget = null;
+
+// ══════════════════════════════════════
+//   SCREEN MANAGER
+// ══════════════════════════════════════
+function openScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+  if (id==='districtScreen') initDistricts();
+  if (id==='testScreen')     initTest();
+  if (id==='randomScreen')   initRandom();
+}
+function goHome() {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('home').classList.add('on');
+}
+
+// ══════════════════════════════════════
+//   GYM CARD RENDERER
+// ══════════════════════════════════════
+function renderGymCard(gym, rank) {
+  const matchScore = calcMatchScore(gym);
+  const rankClass = rank===1?'top1':rank===2?'top2':rank===3?'top3':'';
+  const chainColor = {더클라임:'#E8391A',서울숲:'#22C55E',피커스:'#3B82F6',클라이밍파크:'#A855F7',알레:'#F59E0B'}[gym.chain]||'var(--border)';
+  const chainBadge = gym.chain ? `<span style="font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:999px;background:${chainColor}22;color:${chainColor};border:1px solid ${chainColor}55;margin-left:6px">${gym.chain}</span>` : '';
+  const tagsHtml = gym.tags.map(t =>
+    `<span class="gym-tag ${gym.tagClasses[t]||''}">${t}</span>`).join('');
+
+  const bars = [
+    {label:'다이나믹', val:gym.dynamic, color:'#E8391A'},
+    {label:'스태틱',   val:gym.static,  color:'#3B82F6'},
+    {label:'난이도',   val:6-gym.beginner, color:'#F59E0B'},
+  ];
+  const barsHtml = bars.map(b => `
+    <div class="gym-bar-row">
+      <span class="gym-bar-label">${b.label}</span>
+      <div class="gym-bar-track">
+        <div class="gym-bar-fill" style="width:${b.val*20}%;background:${b.color}"></div>
+      </div>
+    </div>`).join('');
+
+  return `
+    <div class="gym-card" onclick="openGymDetail(GYMS.find(g=>g.id===${gym.id}))">
+      <div class="gym-card-top">
+        <div class="gym-rank ${rankClass}">${rank}</div>
+        <div class="gym-info">
+          <div class="gym-name">${gym.emoji} ${gym.name}${chainBadge}</div>
+          <div class="gym-addr">📍 ${gym.address}</div>
+        </div>
+        ${selectedStyle ? `<div class="gym-match">${matchScore}%</div>` : ''}
+      </div>
+      <div class="gym-tags">${tagsHtml}</div>
+      <div class="gym-bars">${barsHtml}</div>
+      <div class="gym-card-footer">
+        <div class="gym-price">입장료 <span>${gym.price}</span></div>
+        <div class="gym-detail-btn">상세 보기 ›</div>
+      </div>
+    </div>`;
+}
+
+function calcMatchScore(gym) {
+  if (!selectedStyle) return 80;
+  const scores = {
+    dynamic:    gym.dynamic    / 5,
+    static:     gym.static     / 5,
+    bouldering: gym.bouldering / 5,
+    lead:       gym.lead       / 5,
+  };
+  return Math.round((scores[selectedStyle] || 0.6) * 100);
+}
+
+// ══════════════════════════════════════
+//   STYLE SCREEN
+// ══════════════════════════════════════
+function selectStyle(style) {
+  selectedStyle = style;
+  document.querySelectorAll('.style-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.style === style);
+  });
+  renderStyleGyms();
+}
+
+function toggleFilter(el, val) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  activeFilter = val;
+  renderStyleGyms();
+}
+
+function renderStyleGyms() {
+  const list = document.getElementById('styleGymList');
+  if (!selectedStyle) {
+    list.innerHTML = `<div class="empty-state"><div>⚡</div><p>위에서 스타일을 선택하면<br>맞는 암장이 나타나요!</p></div>`;
+    return;
+  }
+
+  let gyms = [...GYMS].filter(g => g.styles.includes(selectedStyle));
+
+  if (activeFilter === 'beginner') gyms = gyms.filter(g => g.beginner >= 4);
+  if (activeFilter === 'large')    gyms = gyms.filter(g => g.space >= 4);
+  if (activeFilter === 'setting')  gyms = gyms.filter(g => g.setting >= 4);
+  if (activeFilter === 'community')gyms = gyms.filter(g => g.community >= 4);
+  if (activeFilter === '더클라임') gyms = gyms.filter(g => g.chain === '더클라임');
+  if (activeFilter === '서울숲')   gyms = gyms.filter(g => g.chain === '서울숲');
+  if (activeFilter === '피커스')   gyms = gyms.filter(g => g.chain === '피커스');
+  if (activeFilter === '클라이밍파크') gyms = gyms.filter(g => g.chain === '클라이밍파크');
+  if (activeFilter === '알레') gyms = gyms.filter(g => g.chain === '알레');
+
+  const scoreMap = {dynamic:'dynamic',static:'static',bouldering:'bouldering',lead:'lead'};
+  gyms.sort((a,b) => b[scoreMap[selectedStyle]] - a[scoreMap[selectedStyle]]);
+
+  if (gyms.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div>🔍</div><p>조건에 맞는 암장이 없어요<br>필터를 바꿔보세요!</p></div>`;
+    return;
+  }
+  list.innerHTML = gyms.map((g,i) => renderGymCard(g, i+1)).join('');
+}
+
+// ══════════════════════════════════════
+//   DISTRICT SCREEN
+// ══════════════════════════════════════
+function initDistricts() {
+  const grid = document.getElementById('districtGrid');
+  grid.innerHTML = DISTRICTS.map(d => `
+    <div class="district-btn ${selectedDistrict===d?'on':''}" onclick="selectDistrict('${d}')">
+      <span>${d}</span>
+    </div>`).join('');
+}
+
+function selectDistrict(gu) {
+  selectedDistrict = gu;
+  document.querySelectorAll('.district-btn').forEach(b => {
+    b.classList.toggle('on', b.querySelector('span').textContent === gu);
+  });
+  renderDistrictGyms(gu);
+}
+
+function renderDistrictGyms(gu) {
+  const list = document.getElementById('districtGymList');
+  // 직접 해당 구 → 인근 구 순으로 정렬
+  const direct = GYMS.filter(g => g.gu === gu);
+  const nearby = GYMS.filter(g => g.nearbyGu.includes(gu) && g.gu !== gu);
+  const all = [...direct, ...nearby].slice(0, 8);
+
+  if (all.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div>📍</div><p>해당 구 근처 암장 정보가 없어요</p></div>`;
+    return;
+  }
+
+  let html = '';
+  if (direct.length > 0) {
+    html += `<div style="font-size:.72rem;font-weight:700;color:var(--red);
+      letter-spacing:.15em;margin-bottom:8px;padding:0 2px">
+      ${gu} 직접 위치</div>`;
+    html += direct.map((g,i) => renderGymCard(g, i+1)).join('');
+  }
+  if (nearby.length > 0) {
+    html += `<div style="font-size:.72rem;font-weight:700;color:var(--muted);
+      letter-spacing:.15em;margin:16px 0 8px;padding:0 2px">
+      인근 구 암장</div>`;
+    html += nearby.slice(0,5).map((g,i) => renderGymCard(g, i+1)).join('');
+  }
+  list.innerHTML = html;
+}
+
+// ══════════════════════════════════════
+//   CLIMBER TEST
+// ══════════════════════════════════════
+function initTest() {
+  testAnswers = {}; testStep = 0;
+  document.getElementById('testResultArea').style.display = 'none';
+  document.getElementById('testQuestionArea').style.display = 'block';
+  showTestQuestion(0);
+}
+
+function showTestQuestion(idx) {
+  const q = TEST_QUESTIONS[idx];
+  const pct = (idx / TEST_QUESTIONS.length) * 100;
+  document.getElementById('testProgFill').style.width = pct + '%';
+  document.getElementById('testProgLabel').textContent = `${idx} / ${TEST_QUESTIONS.length}`;
+
+  document.getElementById('testQuestionArea').innerHTML = `
+    <div class="test-q section-pad" style="padding-bottom:0">
+      <div class="test-q-num">Q${q.num}</div>
+      <div class="test-q-text">${q.text}</div>
+      <div class="test-q-sub">${q.sub}</div>
+    </div>
+    <div class="test-options section-pad" style="padding-top:16px">
+      ${q.options.map((o,i) => `
+        <div class="test-opt" onclick="answerTest(${idx},${i})">
+          <span class="test-opt-emoji">${o.e}</span>
+          <div>
+            <div class="test-opt-text">${o.text}</div>
+            <div class="test-opt-sub">${o.sub}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function answerTest(qIdx, aIdx) {
+  const q = TEST_QUESTIONS[qIdx];
+  const answer = q.options[aIdx];
+
+  // 애니메이션
+  document.querySelectorAll('.test-opt')[aIdx].classList.add('chosen');
+
+  // 점수 합산
+  Object.entries(answer.val).forEach(([k,v]) => {
+    testAnswers[k] = (testAnswers[k] || 0) + v;
+  });
+
+  setTimeout(() => {
+    const next = qIdx + 1;
+    if (next < TEST_QUESTIONS.length) {
+      showTestQuestion(next);
+    } else {
+      showTestResult();
+    }
+  }, 320);
+}
+
+function showTestResult() {
+  document.getElementById('testProgFill').style.width = '100%';
+  document.getElementById('testProgLabel').textContent = `${TEST_QUESTIONS.length} / ${TEST_QUESTIONS.length}`;
+  document.getElementById('testQuestionArea').style.display = 'none';
+  document.getElementById('testResultArea').style.display = 'block';
+
+  // 최고 점수 유형 찾기
+  const typeKeys = Object.keys(CLIMBER_TYPES);
+  let bestType = 'bouldering';
+  let bestScore = 0;
+  typeKeys.forEach(k => {
+    const score = testAnswers[k] || 0;
+    if (score > bestScore) { bestScore = score; bestType = k; }
+  });
+  if (bestScore === 0) bestType = 'dynamic';
+
+  const type = CLIMBER_TYPES[bestType] || CLIMBER_TYPES['dynamic'];
+  const matchGyms = GYMS.filter(type.gymFilter).slice(0, 4);
+
+  const matchHtml = matchGyms.map((g,i) => `
+    <div class="gym-card" onclick="openGymDetail(GYMS.find(gg=>gg.id===${g.id}))"
+      style="animation:fadeUp .4s ${i*.1}s both">
+      <div class="gym-card-top">
+        <div class="gym-rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</div>
+        <div class="gym-info">
+          <div class="gym-name">${g.emoji} ${g.name}</div>
+          <div class="gym-addr">📍 ${g.gu}</div>
+        </div>
+      </div>
+      <div class="gym-tags">${g.tags.map(t=>`<span class="gym-tag ${g.tagClasses[t]||''}">${t}</span>`).join('')}</div>
+      <div class="gym-card-footer">
+        <div class="gym-price">입장료 <span>${g.price}</span></div>
+        <div class="gym-detail-btn">상세 보기 ›</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('testResultArea').innerHTML = `
+    <div class="test-result">
+      <div class="result-type-card">
+        <span class="result-type-emoji">${type.emoji}</span>
+        <div class="result-type-label">나의 클라이머 유형</div>
+        <div class="result-type-name">${type.name}</div>
+        <div class="result-type-desc">${type.desc}</div>
+      </div>
+      <div style="font-size:.75rem;font-weight:700;color:var(--red);
+        letter-spacing:.2em;margin-bottom:12px">추천 암장</div>
+      ${matchHtml}
+      <div style="margin-top:20px;display:flex;gap:8px">
+        <button class="pill-btn ghost" style="flex:1;justify-content:center"
+          onclick="initTest()">다시 테스트</button>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════
+//   RANDOM PICK
+// ══════════════════════════════════════
+// ── 랜덤 태그 상태 ──
+let activeRandTags = new Set();
+
+function initRandom() {
+  lastRandomGym = null;
+  activeRandTags = new Set();
+  document.getElementById('randomDetailBtn').disabled = true;
+  document.getElementById('randomDisplay').innerHTML =
+    `<span style="font-size:.9rem;color:var(--muted);line-height:1.7;text-align:center;padding:0 16px">위에서 특징을 고르거나<br>그냥 뽑기를 눌러보세요!</span>`;
+  document.querySelectorAll('.rand-tag').forEach(t => t.classList.remove('on'));
+  updateRandCount();
+}
+
+function toggleRandTag(el) {
+  const key = el.dataset.key;
+  el.classList.toggle('on');
+  if (el.classList.contains('on')) activeRandTags.add(key);
+  else activeRandTags.delete(key);
+  updateRandCount();
+}
+
+function getFilteredPool() {
+  if (activeRandTags.size === 0) return GYMS;
+  return GYMS.filter(gym => {
+    for (const key of activeRandTags) {
+      if (key.startsWith('chain_')) {
+        const chainName = key.replace('chain_', '');
+        // 피커스 체인 태그는 피커스도 포함
+        if (chainName === '피커스') { if (gym.chain !== '피커스') return false; }
+        else { if (gym.chain !== chainName) return false; }
+      } else if (key === 'dynamic')   { if (gym.dynamic   < 4) return false; }
+      else if (key === 'static')    { if (gym.static    < 4) return false; }
+      else if (key === 'bouldering'){ if (gym.bouldering < 4) return false; }
+      else if (key === 'lead')      { if (gym.lead       < 4) return false; }
+      else if (key === 'beginner')  { if (gym.beginner   < 4) return false; }
+      else if (key === 'large')     { if (gym.space      < 4) return false; }
+      else if (key === 'setting')   { if (gym.setting    < 4) return false; }
+      else if (key === 'community') { if (gym.community  < 4) return false; }
+    }
+    return true;
+  });
+}
+
+function updateRandCount() {
+  const pool = getFilteredPool();
+  const el = document.getElementById('randMatchCount');
+  if (!el) return;
+  if (activeRandTags.size === 0) {
+    el.textContent = '';
+  } else if (pool.length === 0) {
+    el.innerHTML = '<span class="rand-match-zero">조건에 맞는 암장이 없어요 — 필터를 줄여보세요</span>';
+  } else {
+    el.textContent = `총 ${pool.length}개 암장 중에서 뽑을게요!`;
+  }
+}
+
+function pickRandom() {
+  const pool = getFilteredPool();
+  if (pool.length === 0) {
+    document.getElementById('randomDisplay').innerHTML =
+      `<span style="font-size:.85rem;color:var(--red);text-align:center;line-height:1.7;padding:0 16px">조건에 맞는 암장이 없어요!<br>필터를 줄여보세요 😅</span>`;
+    return;
+  }
+
+  const btn = document.getElementById('randomBtn');
+  const display = document.getElementById('randomDisplay');
+  btn.disabled = true;
+  display.classList.add('spinning');
+
+  // 먼저 최종 당첨 암장을 미리 결정
+  const winner = pool[Math.floor(Math.random() * pool.length)];
+
+  let count = 0;
+  const totalTicks = 16;
+  const interval = setInterval(() => {
+    // 마지막 3틱은 winner로 고정 (심리적 확정감)
+    const showGym = count < totalTicks - 3
+      ? pool[Math.floor(Math.random() * pool.length)]
+      : winner;
+    display.innerHTML = `
+      <span class="random-gym-emoji">${showGym.emoji}</span>
+      <div class="random-gym-name" style="font-size:${showGym.name.length > 12 ? '1.5rem' : '2rem'}">${showGym.name}</div>
+      <div class="random-gym-addr">📍 ${showGym.gu}</div>`;
+    count++;
+    if (count >= totalTicks) {
+      clearInterval(interval);
+      display.classList.remove('spinning');
+      finalRandom(winner);
+      btn.disabled = false;
+    }
+  }, 110);
+}
+
+function finalRandom(winner) {
+  const gym = winner;
+  lastRandomGym = gym;
+  const display = document.getElementById('randomDisplay');
+  const chainColor = {더클라임:'#E8391A',서울숲:'#22C55E',피커스:'#3B82F6',클라이밍파크:'#A855F7',알레:'#F59E0B'}[gym.chain];
+  const chainBadgeHtml = gym.chain
+    ? `<span style="font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:999px;background:${chainColor}22;color:${chainColor};border:1px solid ${chainColor}55;margin-bottom:6px;display:inline-block">${gym.chain}</span><br>`
+    : '';
+  display.innerHTML = `
+    <span class="random-gym-emoji" style="animation:bounce 1.5s ease-in-out infinite;font-size:3rem">${gym.emoji}</span>
+    <div style="margin-bottom:4px">${chainBadgeHtml}</div>
+    <div class="random-gym-name" style="font-size:${gym.name.length > 12 ? '1.4rem' : '1.8rem'};line-height:1.2">${gym.name}</div>
+    <div class="random-gym-addr" style="margin-top:4px">📍 ${gym.gu}</div>
+    <div class="random-tags" style="margin-top:10px;justify-content:center">
+      ${gym.tags.slice(0,3).map(t=>`<span class="gym-tag ${gym.tagClasses[t]||''}">${t}</span>`).join('')}
+    </div>`;
+  document.getElementById('randomDetailBtn').disabled = false;
+  if (navigator.vibrate) navigator.vibrate([40, 20, 80]);
+}
+
+// ══════════════════════════════════════
+//   BATTLE
+// ══════════════════════════════════════
+function openBattleSelect(slot) {
+  battleSelectTarget = slot;
+  const popup = document.getElementById('selectPopup');
+  popup.classList.add('on');
+  const list = document.getElementById('selectPopupList');
+  list.innerHTML = GYMS.map(g => `
+    <div class="gym-card" onclick="setBattleGym('${slot}',${g.id})" style="cursor:pointer">
+      <div class="gym-card-top">
+        <div class="gym-info">
+          <div class="gym-name">${g.emoji} ${g.name}</div>
+          <div class="gym-addr">📍 ${g.gu}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function setBattleGym(slot, gymId) {
+  const gym = GYMS.find(g => g.id === gymId);
+  if (slot === 'A') battleGymA = gym;
+  else battleGymB = gym;
+  closeSelectPopup();
+
+  // 슬롯 업데이트
+  const slotEl = document.getElementById(`battleSlot${slot}`);
+  slotEl.classList.add('filled');
+  slotEl.innerHTML = `
+    <div class="battle-slot-emoji">${gym.emoji}</div>
+    <div class="battle-slot-name">${gym.name}</div>`;
+
+  if (battleGymA && battleGymB) renderBattle();
+}
+
+function renderBattle() {
+  const a = battleGymA, b = battleGymB;
+  const metrics = [
+    {label:'다이나믹', ka:'dynamic',  kb:'dynamic'},
+    {label:'스태틱',   ka:'static',   kb:'static'},
+    {label:'볼더링',   ka:'bouldering',kb:'bouldering'},
+    {label:'리드',     ka:'lead',     kb:'lead'},
+    {label:'초보친화', ka:'beginner', kb:'beginner'},
+    {label:'시설규모', ka:'space',    kb:'space'},
+    {label:'세팅',     ka:'setting',  kb:'setting'},
+    {label:'커뮤니티', ka:'community',kb:'community'},
+  ];
+
+  let aTotal = 0, bTotal = 0;
+  const rowsHtml = metrics.map(m => {
+    const av = a[m.ka], bv = b[m.kb];
+    aTotal += av; bTotal += bv;
+    const total = Math.max(av + bv, 1);
+    const aPct = Math.round(av / total * 80);
+    const bPct = Math.round(bv / total * 80);
+    return `
+      <div class="battle-row">
+        <div class="battle-val-a">${av}</div>
+        <div class="battle-bars">
+          <div class="battle-bar-a" style="width:${aPct}%"></div>
+          <div style="font-size:.65rem;color:var(--muted);white-space:nowrap;
+            padding:0 6px;flex-shrink:0">${m.label}</div>
+          <div class="battle-bar-b" style="width:${bPct}%"></div>
+        </div>
+        <div class="battle-val-b">${bv}</div>
+      </div>`;
+  }).join('');
+
+  const winner = aTotal >= bTotal ? a : b;
+  const winColor = aTotal >= bTotal ? 'var(--red)' : 'var(--blue)';
+  const diff = Math.abs(aTotal - bTotal);
+
+  document.getElementById('battleResult').style.display = 'block';
+  document.getElementById('battleResult').innerHTML = `
+    <div style="display:flex;justify-content:space-between;
+      font-size:.72rem;font-weight:700;margin-bottom:8px;padding:0 2px">
+      <span style="color:var(--red)">${a.name}</span>
+      <span style="color:var(--blue)">${b.name}</span>
+    </div>
+    ${rowsHtml}
+    <div class="battle-winner-banner">
+      <div class="battle-winner-text" style="color:${winColor}">
+        🏆 ${winner.name} 승!
+      </div>
+      <div class="battle-winner-sub">
+        종합 점수 ${Math.max(aTotal,bTotal)} vs ${Math.min(aTotal,bTotal)}
+        · ${diff}점 차이
+      </div>
+    </div>`;
+}
+
+function closeSelectPopup(e) {
+  if (e && e.target !== document.getElementById('selectPopup')) return;
+  document.getElementById('selectPopup').classList.remove('on');
+}
+
+// ══════════════════════════════════════
+//   GYM DETAIL MODAL
+// ══════════════════════════════════════
+function openGymDetail(gym) {
+  if (!gym) return;
+  const bars = [
+    {label:'다이나믹', val:gym.dynamic,    color:'#E8391A'},
+    {label:'스태틱',   val:gym.static,     color:'#3B82F6'},
+    {label:'볼더링',   val:gym.bouldering, color:'#F59E0B'},
+    {label:'리드',     val:gym.lead,       color:'#22C55E'},
+    {label:'초보친화', val:gym.beginner,   color:'#A855F7'},
+    {label:'시설규모', val:gym.space,      color:'#06B6D4'},
+    {label:'세팅',     val:gym.setting,    color:'#EC4899'},
+    {label:'커뮤니티', val:gym.community,  color:'#F97316'},
+  ];
+  const barsHtml = bars.map(b => `
+    <div class="gym-bar-row" style="margin-bottom:8px">
+      <span class="gym-bar-label">${b.label}</span>
+      <div class="gym-bar-track" style="height:6px">
+        <div class="gym-bar-fill" style="width:${b.val*20}%;background:${b.color};
+          height:6px;transition:width .8s ease"></div>
+      </div>
+      <span style="font-size:.72rem;color:var(--muted);width:24px;
+        text-align:right;margin-left:6px">${b.val}/5</span>
+    </div>`).join('');
+
+  const tagsHtml = gym.tags.map(t =>
+    `<span class="gym-tag ${gym.tagClasses[t]||''}" style="font-size:.78rem;padding:5px 10px">${t}</span>`).join('');
+
+  const mChainColor = {더클라임:'#E8391A',서울숲:'#22C55E',피커스:'#3B82F6',클라이밍파크:'#A855F7',알레:'#F59E0B'}[gym.chain]||null;
+  const mChainBadge = gym.chain ? `<span style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;background:${mChainColor}20;color:${mChainColor};border:1px solid ${mChainColor}44;display:inline-block;margin-bottom:12px">${gym.chain} 체인 · 회원권 공용</span>` : '';
+  document.getElementById('modalContent').innerHTML = `
+    <div style="font-size:2.5rem;margin-bottom:8px">${gym.emoji}</div>
+    <div class="modal-gym-name">${gym.name}</div>
+    ${mChainBadge}
+    <div class="modal-gym-addr">📍 ${gym.address}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px">${tagsHtml}</div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">소개</div>
+      <div class="modal-desc">${gym.desc}</div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">스펙 분석</div>
+      ${barsHtml}
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">추천 이유</div>
+      <div class="modal-pros">
+        ${gym.pros.map(p => `<div class="modal-pro">${p}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">운영 시간</div>
+      <div class="modal-hours">${gym.hours.replace(/\n/g,'<br>')}</div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">이용 요금</div>
+      <div class="modal-desc" style="font-size:1.1rem;font-weight:700;
+        color:var(--chalk)">1회 ${gym.price}</div>
+    </div>`;
+
+  document.getElementById('gymModal').classList.add('on');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('gymModal')) return;
+  document.getElementById('gymModal').classList.remove('on');
+}
+
+// ══════════════════════════════════════
+//   CSS keyframe for spin
+// ══════════════════════════════════════
+const style = document.createElement('style');
+style.textContent = `@keyframes spin{to{transform:rotate(360deg)}}`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
