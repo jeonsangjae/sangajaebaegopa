@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>망작 메이커 📖</title>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+:root {
+  --bg:#0C0A18; --card:#16142A; --card2:#1E1B35;
+  --border:#2A2845; --text:#F0EAD6; --muted:#7A7490;
+  --accent:#F5C518; --red:#E03535; --green:#22C55E;
+  --spy:#E03535; --citizen:#3B82F6;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;overflow:hidden}
+
+/* ─── SCREENS ─── */
+.scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+  overflow-y:auto;padding-bottom:40px;
+  opacity:0;pointer-events:none;transition:opacity .35s;z-index:1}
+.scr.on{opacity:1;pointer-events:all}
+
+/* ─── SETUP SCREEN ─── */
+#s-setup{justify-content:center;padding:24px}
+.setup-box{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:28px;max-width:480px;width:100%}
+.setup-logo{font-family:'Black Han Sans';font-size:2rem;color:var(--accent);
+  text-align:center;margin-bottom:4px}
+.setup-sub{font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:20px;line-height:1.6}
+.setup-step{background:var(--card2);border-radius:12px;padding:14px 16px;
+  margin-bottom:12px;font-size:.8rem;line-height:1.8}
+.setup-step b{color:var(--accent)}
+.setup-step code{background:#0C0A18;border-radius:4px;padding:1px 6px;
+  font-size:.75rem;color:#88CFFF}
+textarea.fb-input{width:100%;background:#0C0A18;border:1px solid var(--border);
+  border-radius:10px;color:var(--text);padding:12px;font-size:.75rem;
+  font-family:monospace;resize:vertical;min-height:130px;margin:12px 0;outline:none}
+textarea.fb-input:focus{border-color:var(--accent)}
+
+/* ─── HOME SCREEN ─── */
+#s-home{justify-content:center;padding:24px;gap:20px}
+.home-title{font-family:'Black Han Sans';font-size:3.2rem;color:var(--accent);
+  text-align:center;line-height:1;text-shadow:0 0 40px rgba(245,197,24,.3)}
+.home-subtitle{font-size:.85rem;color:var(--muted);text-align:center;line-height:1.7;
+  max-width:280px}
+.home-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+.btn-primary{background:var(--accent);color:#0C0A18;font-family:'Black Han Sans';
+  font-size:1.2rem;border:none;border-radius:14px;padding:16px;cursor:pointer;
+  transition:transform .1s,filter .1s;letter-spacing:.05em}
+.btn-primary:active{transform:scale(.96)}
+.btn-secondary{background:var(--card);border:1.5px solid var(--border);color:var(--text);
+  font-size:.95rem;font-weight:700;border-radius:14px;padding:14px;cursor:pointer;
+  transition:border-color .2s}
+.btn-secondary:hover{border-color:var(--accent)}
+.name-input{background:var(--card2);border:1.5px solid var(--border);border-radius:12px;
+  color:var(--text);font-size:1rem;padding:14px 16px;width:100%;outline:none;
+  transition:border-color .2s;font-family:'Noto Sans KR'}
+.name-input:focus{border-color:var(--accent)}
+.join-row{display:flex;gap:8px}
+.code-input{background:var(--card2);border:1.5px solid var(--border);border-radius:12px;
+  color:var(--text);font-size:1.2rem;font-weight:700;letter-spacing:.2em;
+  padding:14px 16px;flex:1;outline:none;text-transform:uppercase;font-family:monospace}
+.code-input:focus{border-color:var(--accent)}
+.divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.8rem;
+  width:100%;max-width:320px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ─── LOBBY SCREEN ─── */
+#s-lobby{padding:24px}
+.top-bar{display:flex;align-items:center;justify-content:space-between;
+  width:100%;max-width:480px;margin-bottom:20px}
+.back-btn{width:38px;height:38px;background:var(--card);border:1px solid var(--border);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;cursor:pointer}
+.screen-title{font-family:'Black Han Sans';font-size:1.4rem;color:var(--accent)}
+.room-code-badge{background:var(--card2);border:1px solid var(--border);
+  border-radius:20px;padding:6px 14px;font-size:.75rem;color:var(--muted)}
+.room-code-badge b{color:var(--accent);font-size:.9rem;letter-spacing:.15em}
+
+.player-list{width:100%;max-width:480px;display:flex;flex-direction:column;gap:8px;
+  margin-bottom:20px}
+.player-item{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px 16px;display:flex;align-items:center;gap:12px}
+.player-emoji{font-size:1.5rem;width:40px;height:40px;background:var(--card2);
+  border-radius:50%;display:flex;align-items:center;justify-content:center}
+.player-name{font-weight:700;flex:1}
+.host-badge{font-size:.65rem;background:rgba(245,197,24,.15);color:var(--accent);
+  border:1px solid rgba(245,197,24,.3);border-radius:20px;padding:2px 8px;font-weight:700}
+
+.settings-box{width:100%;max-width:480px;background:var(--card);
+  border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px}
+.settings-title{font-size:.7rem;font-weight:700;color:var(--muted);
+  letter-spacing:.15em;margin-bottom:14px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;gap:12px}
+.setting-label{font-size:.85rem;color:var(--text)}
+.setting-opts{display:flex;gap:6px}
+.opt-btn{background:var(--card2);border:1.5px solid var(--border);border-radius:8px;
+  color:var(--muted);font-size:.78rem;padding:5px 10px;cursor:pointer;transition:.15s;
+  font-family:'Noto Sans KR'}
+.opt-btn.on{background:rgba(245,197,24,.1);border-color:var(--accent);color:var(--accent)}
+
+.start-btn{width:100%;max-width:480px;background:var(--accent);color:#0C0A18;
+  font-family:'Black Han Sans';font-size:1.3rem;border:none;border-radius:14px;
+  padding:17px;cursor:pointer}
+
+/* ─── ROLE SCREEN ─── */
+#s-role{justify-content:center;padding:24px;gap:24px}
+.role-genre{font-size:.8rem;color:var(--muted);text-align:center;line-height:1.6}
+.role-genre b{color:var(--text)}
+.card-flip{width:280px;height:380px;perspective:1000px;cursor:pointer}
+.card-inner{width:100%;height:100%;position:relative;
+  transform-style:preserve-3d;transition:transform .8s cubic-bezier(.25,.46,.45,.94)}
+.card-flip.flipped .card-inner{transform:rotateY(180deg)}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:28px}
+.card-back{background:var(--card);border:2px solid var(--border)}
+.card-back-pattern{font-size:2rem;opacity:.15;letter-spacing:.5rem;line-height:1.8;
+  text-align:center;overflow:hidden;max-height:200px}
+.card-back-label{font-family:'Black Han Sans';font-size:1.1rem;color:var(--muted)}
+.card-front{background:var(--card);transform:rotateY(180deg)}
+.card-front.citizen{border:2px solid var(--citizen);
+  box-shadow:0 0 40px rgba(59,130,246,.2)}
+.card-front.spy{border:2px solid var(--spy);
+  box-shadow:0 0 40px rgba(224,53,53,.25);animation:spyGlow 2s ease-in-out infinite}
+@keyframes spyGlow{0%,100%{box-shadow:0 0 30px rgba(224,53,53,.2)}
+  50%{box-shadow:0 0 60px rgba(224,53,53,.4)}}
+.role-icon{font-size:3.5rem}
+.role-name{font-family:'Black Han Sans';font-size:1.8rem}
+.citizen .role-name{color:var(--citizen)}
+.spy .role-name{color:var(--spy)}
+.role-desc{font-size:.8rem;color:var(--muted);text-align:center;line-height:1.7}
+.mission-box{background:rgba(224,53,53,.1);border:1.5px solid rgba(224,53,53,.4);
+  border-radius:12px;padding:14px;width:100%;text-align:center;margin-top:4px}
+.mission-label{font-size:.65rem;color:var(--spy);font-weight:700;
+  letter-spacing:.15em;margin-bottom:6px}
+.mission-text{font-size:.85rem;color:var(--text);font-weight:700;line-height:1.6}
+.mission-pts{font-size:.72rem;color:var(--accent);margin-top:4px}
+.tap-hint{font-size:.75rem;color:var(--muted);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.ok-btn{width:100%;max-width:320px;background:var(--accent);color:#0C0A18;
+  font-family:'Black Han Sans';font-size:1.15rem;border:none;border-radius:14px;
+  padding:16px;cursor:pointer;display:none}
+
+/* ─── GENRE SCREEN ─── */
+#s-genre{justify-content:center;padding:32px 24px;gap:20px}
+.genre-pill{background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);
+  border-radius:999px;padding:6px 18px;font-size:.8rem;color:var(--accent);
+  font-weight:700;letter-spacing:.1em}
+.genre-title{font-family:'Black Han Sans';font-size:2.2rem;color:var(--text);
+  text-align:center;line-height:1.2}
+.genre-emoji{font-size:4rem}
+.opening-box{background:var(--card);border-left:3px solid var(--accent);
+  border-radius:0 12px 12px 0;padding:18px 20px;width:100%;max-width:420px;
+  font-family:'Nanum Myeongjo';font-size:1.05rem;line-height:1.9;color:var(--text)}
+.goal-box{background:var(--card2);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;width:100%;max-width:420px;font-size:.82rem;
+  color:var(--muted);line-height:1.7}
+.goal-box b{color:var(--text)}
+
+/* ─── WRITING SCREEN ─── */
+#s-writing{padding:16px}
+.writing-header{width:100%;max-width:480px;margin-bottom:16px}
+.turn-indicator{text-align:center;margin-bottom:8px}
+.turn-name{font-family:'Black Han Sans';font-size:1.2rem;color:var(--accent)}
+.turn-sub{font-size:.75rem;color:var(--muted);margin-top:2px}
+.progress-bar-wrap{width:100%;height:4px;background:var(--border);border-radius:2px;
+  margin-top:10px}
+.progress-bar{height:100%;background:var(--accent);border-radius:2px;
+  transition:width .3s}
+
+.view-box{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:20px;width:100%;max-width:480px;margin-bottom:12px;
+  font-family:'Nanum Myeongjo';font-size:1.05rem;line-height:2;
+  color:var(--muted);min-height:80px;position:relative}
+.view-box .visible-text{color:var(--text)}
+.view-label{font-size:.65rem;color:var(--muted);letter-spacing:.15em;
+  font-weight:700;margin-bottom:8px;font-family:'Noto Sans KR'}
+
+.timer-ring{width:60px;height:60px;position:relative;margin:0 auto 10px}
+.timer-ring svg{transform:rotate(-90deg)}
+.timer-ring circle{fill:none;stroke:var(--border);stroke-width:4}
+.timer-ring circle.prog{stroke:var(--accent);stroke-width:4;
+  stroke-dasharray:157;stroke-linecap:round;transition:stroke-dashoffset .9s linear,stroke .5s}
+.timer-ring .timer-num{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-family:'Black Han Sans';font-size:1.3rem;color:var(--accent)}
+
+.write-input{width:100%;max-width:480px;background:var(--card);
+  border:2px solid var(--accent);border-radius:14px;color:var(--text);
+  font-family:'Nanum Myeongjo';font-size:1.05rem;padding:16px;
+  resize:none;outline:none;min-height:110px;line-height:1.8}
+.char-count{font-size:.75rem;color:var(--muted);text-align:right;
+  width:100%;max-width:480px;margin-top:4px}
+.submit-sentence-btn{width:100%;max-width:480px;background:var(--accent);
+  color:#0C0A18;font-family:'Black Han Sans';font-size:1.2rem;
+  border:none;border-radius:14px;padding:16px;cursor:pointer;margin-top:8px}
+.submit-sentence-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.waiting-screen{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:60vh;gap:16px;padding:24px;text-align:center}
+.waiting-spinner{width:60px;height:60px;border:3px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.waiting-name{font-family:'Black Han Sans';font-size:1.5rem;color:var(--accent)}
+.waiting-sub{font-size:.85rem;color:var(--muted);line-height:1.7}
+
+/* ─── NARRATION SCREEN ─── */
+#s-narration{padding:24px}
+.narration-header{width:100%;max-width:540px;text-align:center;margin-bottom:20px}
+.story-title{font-family:'Black Han Sans';font-size:1.6rem;color:var(--accent);
+  margin-bottom:4px}
+.story-meta{font-size:.75rem;color:var(--muted)}
+.tts-controls{display:flex;gap:8px;margin-bottom:20px;width:100%;max-width:540px}
+.tts-btn{flex:1;background:var(--card);border:1.5px solid var(--border);
+  border-radius:12px;padding:10px;font-size:.82rem;font-weight:700;
+  color:var(--text);cursor:pointer;transition:.15s;font-family:'Noto Sans KR'}
+.tts-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tts-btn.playing{background:rgba(245,197,24,.1);border-color:var(--accent);
+  color:var(--accent)}
+
+.story-scroll{width:100%;max-width:540px;display:flex;flex-direction:column;gap:12px;
+  margin-bottom:24px}
+.sentence-card{background:var(--card);border-left:3px solid var(--border);
+  border-radius:0 12px 12px 0;padding:16px 18px;
+  transition:border-color .3s,background .3s}
+.sentence-card.speaking{border-left-color:var(--accent);
+  background:rgba(245,197,24,.05)}
+.sentence-text{font-family:'Nanum Myeongjo';font-size:1.05rem;
+  line-height:2;color:var(--text);margin-bottom:6px}
+.sentence-author{font-size:.72rem;color:var(--muted);text-align:right}
+
+.next-phase-btn{width:100%;max-width:540px;background:var(--accent);color:#0C0A18;
+  font-family:'Black Han Sans';font-size:1.2rem;border:none;border-radius:14px;
+  padding:16px;cursor:pointer}
+
+/* ─── VOTE1 SCREEN ─── */
+#s-vote1{padding:24px}
+.vote-header{width:100%;max-width:480px;margin-bottom:20px;text-align:center}
+.vote-title{font-family:'Black Han Sans';font-size:1.6rem;color:var(--text);
+  margin-bottom:6px}
+.vote-sub{font-size:.82rem;color:var(--muted);line-height:1.7}
+.vote-list{width:100%;max-width:480px;display:flex;flex-direction:column;gap:8px;
+  margin-bottom:20px}
+.vote-item{background:var(--card);border:2px solid var(--border);border-radius:14px;
+  padding:14px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;
+  transition:.2s}
+.vote-item:hover{border-color:var(--muted)}
+.vote-item.selected{border-color:var(--red);background:rgba(224,53,53,.08)}
+.vote-item-emoji{font-size:1.6rem}
+.vote-item-name{font-weight:700;flex:1}
+.vote-item-check{font-size:1.3rem}
+.submit-vote-btn{width:100%;max-width:480px;background:var(--red);color:#fff;
+  font-family:'Black Han Sans';font-size:1.2rem;border:none;border-radius:14px;
+  padding:16px;cursor:pointer}
+.submit-vote-btn:disabled{opacity:.4;cursor:not-allowed}
+.vote-status{width:100%;max-width:480px;text-align:center;
+  font-size:.8rem;color:var(--muted);margin-top:12px}
+
+/* ─── DEFENSE SCREEN ─── */
+#s-defense{justify-content:center;padding:24px;gap:16px}
+.defense-icon{font-size:3.5rem;text-align:center}
+.defense-name{font-family:'Black Han Sans';font-size:1.8rem;color:var(--red);
+  text-align:center}
+.defense-prompt{font-size:.85rem;color:var(--muted);text-align:center;
+  line-height:1.7;max-width:340px}
+.defense-input{width:100%;max-width:440px;background:var(--card);
+  border:2px solid var(--border);border-radius:14px;color:var(--text);
+  font-family:'Nanum Myeongjo';font-size:1rem;padding:16px;
+  resize:none;outline:none;min-height:100px;line-height:1.8}
+.defense-input:focus{border-color:var(--red)}
+.defense-speech{width:100%;max-width:440px;background:var(--card);
+  border:2px solid var(--border);border-radius:14px;padding:18px;
+  font-family:'Nanum Myeongjo';font-size:1rem;line-height:1.9;
+  color:var(--text);min-height:80px}
+.submit-defense-btn{width:100%;max-width:440px;background:var(--red);color:#fff;
+  font-family:'Black Han Sans';font-size:1.2rem;border:none;
+  border-radius:14px;padding:16px;cursor:pointer}
+
+/* ─── VOTE2 SCREEN ─── */
+#s-vote2{justify-content:center;padding:24px;gap:20px}
+.verdict-q{font-family:'Black Han Sans';font-size:1.5rem;color:var(--text);
+  text-align:center;line-height:1.4}
+.accused-card{background:var(--card);border:2px solid var(--red);border-radius:16px;
+  padding:20px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  width:100%;max-width:320px}
+.accused-emoji{font-size:2.5rem}
+.accused-name{font-family:'Black Han Sans';font-size:1.4rem}
+.defense-preview{font-size:.8rem;color:var(--muted);text-align:center;
+  line-height:1.7;font-family:'Nanum Myeongjo';max-height:80px;overflow:hidden}
+.verdict-btns{display:flex;gap:12px;width:100%;max-width:320px}
+.execute-btn{flex:1;background:var(--red);color:#fff;font-family:'Black Han Sans';
+  font-size:1.1rem;border:none;border-radius:14px;padding:16px;cursor:pointer}
+.acquit-btn{flex:1;background:var(--card);border:2px solid var(--border);
+  color:var(--text);font-family:'Black Han Sans';font-size:1.1rem;
+  border:none;border-radius:14px;padding:16px;cursor:pointer}
+.voted-waiting{font-size:.8rem;color:var(--muted);text-align:center}
+
+/* ─── RESULT SCREEN ─── */
+#s-result{padding:24px}
+.result-header{width:100%;max-width:520px;text-align:center;margin-bottom:24px}
+.result-headline{font-family:'Black Han Sans';font-size:1.4rem;color:var(--accent)}
+
+.reveal-card{width:100%;max-width:520px;background:var(--card);
+  border-radius:20px;padding:24px;margin-bottom:16px;text-align:center;
+  border:2px solid var(--border)}
+.reveal-card.spy-won{border-color:var(--spy);
+  box-shadow:0 0 40px rgba(224,53,53,.2)}
+.reveal-card.citizens-won{border-color:var(--citizen);
+  box-shadow:0 0 40px rgba(59,130,246,.15)}
+.spy-reveal-emoji{font-size:3rem;margin-bottom:8px}
+.spy-reveal-role{font-family:'Black Han Sans';font-size:1.1rem;
+  color:var(--spy);margin-bottom:4px}
+.spy-reveal-name{font-family:'Black Han Sans';font-size:2rem;margin-bottom:12px}
+.mission-result-box{background:rgba(224,53,53,.1);border:1px solid rgba(224,53,53,.3);
+  border-radius:12px;padding:14px;margin-bottom:8px}
+.mission-result-label{font-size:.7rem;color:var(--spy);font-weight:700;
+  letter-spacing:.15em;margin-bottom:6px}
+.mission-result-text{font-size:.88rem;color:var(--text);line-height:1.6}
+.mission-result-status{font-size:.82rem;font-weight:700;margin-top:8px}
+.mission-result-status.success{color:var(--green)}
+.mission-result-status.fail{color:var(--muted)}
+
+.scores-box{width:100%;max-width:520px;display:flex;flex-direction:column;
+  gap:6px;margin-bottom:16px}
+.score-row{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px 18px;display:flex;align-items:center;gap:12px}
+.score-row:first-child{border-color:var(--accent)}
+.score-emoji{font-size:1.5rem}
+.score-name{font-weight:700;flex:1}
+.score-pts{font-family:'Black Han Sans';font-size:1.3rem;color:var(--accent)}
+.score-change{font-size:.75rem;color:var(--green);margin-left:4px}
+
+.ai-box{width:100%;max-width:520px;background:var(--card2);
+  border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px}
+.ai-label{font-size:.65rem;color:var(--muted);letter-spacing:.15em;
+  font-weight:700;margin-bottom:10px}
+.ai-text{font-family:'Nanum Myeongjo';font-size:.95rem;line-height:1.9;
+  color:var(--text)}
+
+.replay-btn{width:100%;max-width:520px;background:var(--accent);color:#0C0A18;
+  font-family:'Black Han Sans';font-size:1.2rem;border:none;
+  border-radius:14px;padding:16px;cursor:pointer;margin-bottom:8px}
+.home-again-btn{width:100%;max-width:520px;background:var(--card);
+  border:1.5px solid var(--border);color:var(--text);font-weight:700;
+  font-size:.95rem;border-radius:14px;padding:14px;cursor:pointer;
+  font-family:'Noto Sans KR'}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  background:#2A2845;border:1px solid var(--border);border-radius:12px;
+  padding:12px 20px;font-size:.85rem;color:var(--text);
+  z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;
+  white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+
+/* ─── MISC ─── */
+.gap4{display:flex;flex-direction:column;gap:4px}
+.full-w{width:100%;max-width:480px}
+.mt8{margin-top:8px}
+.hidden{display:none!important}
+
+.emoji-select{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  width:100%;max-width:380px}
+.emoji-opt{font-size:1.8rem;width:52px;height:52px;background:var(--card2);
+  border:2px solid var(--border);border-radius:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:.15s}
+.emoji-opt.selected{border-color:var(--accent);background:rgba(245,197,24,.1)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .4s ease forwards}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style>
+</head>
+<body>
+
+<!-- ══════ SETUP SCREEN ══════ -->
+<div id="s-setup" class="scr">
+  <div class="setup-box">
+    <div class="setup-logo">망작 메이커</div>
+    <div class="setup-sub">멀티플레이를 위해 Firebase 설정이 필요해요<br>딱 한 번만 하면 돼요! (5분이면 충분)</div>
+    <div class="setup-step">
+      <b>① Firebase 콘솔</b> → <a href="https://console.firebase.google.com" target="_blank" style="color:#88CFFF">console.firebase.google.com</a><br>
+      → 프로젝트 만들기 → <b>Realtime Database</b> 활성화 (테스트 모드)
+    </div>
+    <div class="setup-step">
+      <b>② 프로젝트 설정</b> (⚙️ 아이콘) → 내 앱 추가 (웹 <code>&lt;/&gt;</code>)<br>
+      → 아래 <code>firebaseConfig</code> 객체를 복사해 붙여넣기
+    </div>
+    <textarea class="fb-input" id="fbConfigInput" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "databaseURL": "https://...",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+    <button class="btn-primary" onclick="initFirebase()">🔥 Firebase 연결하기</button>
+    <div id="fbError" style="color:var(--red);font-size:.78rem;margin-top:8px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- ══════ HOME SCREEN ══════ -->
+<div id="s-home" class="scr">
+  <div class="home-title">망작<br>메이커</div>
+  <div class="home-subtitle">친구들과 함께 쓰는 릴레이 소설<br>누가 이야기를 망치고 있을까? 📖</div>
+  
+  <div class="home-btns">
+    <div class="gap4">
+      <label style="font-size:.75rem;color:var(--muted);letter-spacing:.1em">내 닉네임</label>
+      <input class="name-input" id="myName" placeholder="닉네임을 입력하세요" maxlength="10">
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin:-4px 0 -4px">
+      이모지 선택:
+    </div>
+    <div class="emoji-select" id="emojiSelect">
+      <div class="emoji-opt selected" data-e="📝" onclick="selectEmoji(this)">📝</div>
+      <div class="emoji-opt" data-e="🎭" onclick="selectEmoji(this)">🎭</div>
+      <div class="emoji-opt" data-e="🦊" onclick="selectEmoji(this)">🦊</div>
+      <div class="emoji-opt" data-e="🐸" onclick="selectEmoji(this)">🐸</div>
+      <div class="emoji-opt" data-e="🐙" onclick="selectEmoji(this)">🐙</div>
+      <div class="emoji-opt" data-e="🐱" onclick="selectEmoji(this)">🐱</div>
+      <div class="emoji-opt" data-e="🐻" onclick="selectEmoji(this)">🐻</div>
+      <div class="emoji-opt" data-e="🌚" onclick="selectEmoji(this)">🌚</div>
+    </div>
+    <button class="btn-primary" onclick="createRoom()">📖 방 만들기</button>
+    <div class="divider">또는</div>
+    <div class="join-row">
+      <input class="code-input" id="joinCode" placeholder="방 코드" maxlength="6">
+      <button class="btn-primary" style="width:80px;padding:14px 0;font-size:1rem" onclick="joinRoom()">입장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ LOBBY SCREEN ══════ -->
+<div id="s-lobby" class="scr">
+  <div class="top-bar">
+    <div class="back-btn" onclick="leaveRoom()">←</div>
+    <div class="screen-title">대기실</div>
+    <div class="room-code-badge">코드 <b id="lobbyCode">---</b></div>
+  </div>
+
+  <div class="player-list" id="playerList"></div>
+
+  <div class="settings-box" id="settingsBox">
+    <div class="settings-title">게임 설정</div>
+    <div class="setting-row">
+      <div class="setting-label">1인당 턴 수</div>
+      <div class="setting-opts">
+        <div class="opt-btn on" data-k="turns" data-v="2" onclick="setSetting(this)">2회</div>
+        <div class="opt-btn" data-k="turns" data-v="3" onclick="setSetting(this)">3회</div>
+        <div class="opt-btn" data-k="turns" data-v="4" onclick="setSetting(this)">4회</div>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">제한 시간</div>
+      <div class="setting-opts">
+        <div class="opt-btn" data-k="timer" data-v="30" onclick="setSetting(this)">30초</div>
+        <div class="opt-btn on" data-k="timer" data-v="60" onclick="setSetting(this)">60초</div>
+        <div class="opt-btn" data-k="timer" data-v="0" onclick="setSetting(this)">없음</div>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">시야 제한</div>
+      <div class="setting-opts">
+        <div class="opt-btn on" data-k="view" data-v="sentence" onclick="setSetting(this)">1문장</div>
+        <div class="opt-btn" data-k="view" data-v="chars" onclick="setSetting(this)">15글자</div>
+        <div class="opt-btn" data-k="view" data-v="full" onclick="setSetting(this)">전체</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="start-btn" id="startBtn" onclick="startGame()">🎲 게임 시작!</button>
+  <div id="waitingForHost" class="hidden" style="font-size:.85rem;color:var(--muted);text-align:center;margin-top:16px">
+    방장이 게임을 시작할 때까지 기다려주세요...
+  </div>
+</div>
+
+<!-- ══════ ROLE SCREEN ══════ -->
+<div id="s-role" class="scr">
+  <div class="role-genre">
+    <b>이번 라운드 장르</b><br>
+    <span id="roleGenreName"></span>
+  </div>
+  <div style="font-size:.8rem;color:var(--muted)">카드를 탭해서 역할을 확인하세요</div>
+  <div class="card-flip" id="roleCard" onclick="flipCard()">
+    <div class="card-inner">
+      <div class="card-face card-back">
+        <div class="card-back-pattern">📖📖📖<br>📖📖📖<br>📖📖📖<br>📖📖📖<br>📖📖📖</div>
+        <div class="card-back-label">탭해서 역할 확인</div>
+      </div>
+      <div class="card-face card-front" id="cardFront">
+        <div class="role-icon" id="roleIcon">?</div>
+        <div class="role-name" id="roleName">?</div>
+        <div class="role-desc" id="roleDesc"></div>
+        <div class="mission-box" id="missionBox" style="display:none">
+          <div class="mission-label">🕵️ 비밀 미션</div>
+          <div class="mission-text" id="missionText"></div>
+          <div class="mission-pts" id="missionPts"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tap-hint" id="tapHint">▲ 카드를 탭하세요</div>
+  <button class="ok-btn" id="roleOkBtn" onclick="confirmRole()">✅ 역할 확인 완료!</button>
+  <div style="font-size:.78rem;color:var(--muted)" id="roleWaiting"></div>
+</div>
+
+<!-- ══════ GENRE SCREEN ══════ -->
+<div id="s-genre" class="scr">
+  <div class="genre-pill" id="genrePill">장르</div>
+  <div class="genre-emoji" id="genreEmoji">📖</div>
+  <div class="genre-title" id="genreTitle">이번 라운드의 장르</div>
+  <div class="opening-box" id="openingBox"></div>
+  <div class="goal-box" id="goalBox"></div>
+  <button class="start-btn" id="genreStartBtn" style="width:100%;max-width:420px;margin-top:8px" onclick="beginWriting()">✍️ 집필 시작!</button>
+</div>
+
+<!-- ══════ WRITING SCREEN ══════ -->
+<div id="s-writing" class="scr">
+  <!-- Your turn view -->
+  <div id="myTurnView" style="width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:10px">
+    <div class="writing-header">
+      <div class="turn-indicator">
+        <div class="turn-name">✍️ 내 차례!</div>
+        <div class="turn-sub" id="writingTurnSub">문장을 이어 써주세요</div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="writingProgress" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="view-box">
+      <div class="view-label" id="viewModeLabel">마지막 문장</div>
+      <div class="visible-text" id="limitedView"></div>
+    </div>
+
+    <div class="timer-ring" id="timerRing">
+      <svg width="60" height="60" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="25"/>
+        <circle class="prog" cx="30" cy="30" r="25" id="timerCircle"/>
+      </svg>
+      <div class="timer-num" id="timerNum">—</div>
+    </div>
+
+    <textarea class="write-input" id="writeInput" placeholder="여기에 이야기를 이어 쓰세요..."
+      maxlength="150" oninput="updateCharCount()"></textarea>
+    <div class="char-count"><span id="charCount">0</span> / 150자</div>
+    <button class="submit-sentence-btn" id="submitBtn" onclick="submitSentence()">이 문장 제출 →</button>
+  </div>
+
+  <!-- Waiting view -->
+  <div id="waitingView" class="waiting-screen" style="display:none">
+    <div class="waiting-spinner"></div>
+    <div class="waiting-name" id="waitingName">누군가의 차례</div>
+    <div class="waiting-sub">이야기를 쓰고 있어요...<br>끝나면 자동으로 넘어가요</div>
+    <div class="timer-ring" id="waitTimerRing">
+      <svg width="60" height="60" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="25"/>
+        <circle class="prog" cx="30" cy="30" r="25" id="waitTimerCircle"/>
+      </svg>
+      <div class="timer-num" id="waitTimerNum">—</div>
+    </div>
+    <div class="progress-bar-wrap" style="width:220px">
+      <div class="progress-bar" id="waitProgress" style="width:0%"></div>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted)" id="waitTurnInfo"></div>
+  </div>
+</div>
+
+<!-- ══════ NARRATION SCREEN ══════ -->
+<div id="s-narration" class="scr">
+  <div class="narration-header">
+    <div class="story-title" id="storyTitleDisplay">완성된 망작</div>
+    <div class="story-meta" id="storyMeta"></div>
+  </div>
+  <div class="tts-controls">
+    <button class="tts-btn" id="ttsPlayBtn" onclick="startTTS()">🔊 낭독 시작</button>
+    <button class="tts-btn" onclick="stopTTS()">⏹ 정지</button>
+  </div>
+  <div class="story-scroll" id="storyScroll"></div>
+  <button class="next-phase-btn" id="goVoteBtn" onclick="goToVote()">🗳 스파이를 찾아라!</button>
+</div>
+
+<!-- ══════ VOTE1 SCREEN ══════ -->
+<div id="s-vote1" class="scr">
+  <div class="vote-header">
+    <div class="vote-title">🕵️ 스파이 지목</div>
+    <div class="vote-sub">이야기를 망친 스파이가 누구일까요?<br>가장 의심스러운 사람을 골라주세요</div>
+  </div>
+  <div class="vote-list" id="voteList"></div>
+  <button class="submit-vote-btn" id="submitVoteBtn" disabled onclick="submitVote1()">지목 완료</button>
+  <div class="vote-status" id="vote1Status"></div>
+</div>
+
+<!-- ══════ DEFENSE SCREEN ══════ -->
+<div id="s-defense" class="scr">
+  <div class="defense-icon">⚖️</div>
+  <div class="defense-name" id="accusedName">피고인</div>
+  <div class="defense-prompt" id="defensPrompt">
+    당신이 지목을 가장 많이 받았습니다.<br>30초 안에 억울함을 호소하세요!
+  </div>
+  <div class="timer-ring">
+    <svg width="60" height="60" viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r="25"/>
+      <circle class="prog" cx="30" cy="30" r="25" id="defenseTimer"/>
+    </svg>
+    <div class="timer-num" id="defenseTimerNum">30</div>
+  </div>
+  <textarea class="defense-input" id="defenseInput" maxlength="200"
+    placeholder="나는 스파이가 아닙니다! 왜냐하면..."></textarea>
+  <div class="defense-speech" id="defenseSpeech" style="display:none"></div>
+  <button class="submit-defense-btn" id="submitDefenseBtn" onclick="submitDefense()">변론 완료</button>
+  <div style="font-size:.8rem;color:var(--muted);text-align:center" id="defenseWaiting"></div>
+</div>
+
+<!-- ══════ VOTE2 SCREEN ══════ -->
+<div id="s-vote2" class="scr">
+  <div class="verdict-q">과연 <span id="accusedInVote2"></span>은<br>스파이일까요?</div>
+  <div class="accused-card">
+    <div class="accused-emoji" id="accusedEmoji2">🎭</div>
+    <div class="accused-name" id="accusedName2">???</div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">최후 변론</div>
+    <div class="defense-preview" id="defensePreview2">—</div>
+  </div>
+  <div class="verdict-btns">
+    <button class="execute-btn" onclick="submitVote2('execute')">🗡 처형!</button>
+    <button class="acquit-btn" onclick="submitVote2('acquit')">🕊 무죄!</button>
+  </div>
+  <div class="voted-waiting" id="vote2Status"></div>
+</div>
+
+<!-- ══════ RESULT SCREEN ══════ -->
+<div id="s-result" class="scr">
+  <div class="result-header">
+    <div class="result-headline" id="resultHeadline">결과 발표</div>
+  </div>
+  <div class="reveal-card" id="revealCard">
+    <div class="spy-reveal-emoji" id="spyRevealEmoji">🕵️</div>
+    <div class="spy-reveal-role">스파이는...</div>
+    <div class="spy-reveal-name" id="spyRevealName"></div>
+    <div class="mission-result-box">
+      <div class="mission-result-label">비밀 미션</div>
+      <div class="mission-result-text" id="missionRevealText"></div>
+      <div class="mission-result-status" id="missionStatus"></div>
+    </div>
+  </div>
+  <div class="scores-box" id="scoresBox"></div>
+  <div class="ai-box">
+    <div class="ai-label">🎙 AI 문학 평론가의 한마디</div>
+    <div class="ai-text" id="aiCommentary">분석 중...</div>
+  </div>
+  <button class="replay-btn" id="replayBtn" onclick="replayGame()">🔄 같은 멤버로 한 판 더!</button>
+  <button class="home-again-btn" onclick="goHomeFromResult()">🏠 처음으로</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA: MISSIONS & GENRES
+// ══════════════════════════════════════════════
+const MISSIONS = {
+  easy: [
+    {text:'"국밥"을 2번 이상 자연스럽게 등장시키기',pts:1},
+    {text:'주인공이 눈물을 흘리게 만들기',pts:1},
+    {text:'동물이 한 마리 이상 등장하게 하기',pts:1},
+    {text:'갑자기 날씨를 급변시키기 (맑음→폭풍 등)',pts:1},
+    {text:'전화 통화 장면을 넣기',pts:1},
+    {text:'"치킨"이 1번 이상 자연스럽게 등장하게 하기',pts:1},
+    {text:'새로운 등장인물을 갑자기 추가하기',pts:1},
+    {text:'식사 장면을 1번 이상 넣기',pts:1},
+    {text:'누군가 넘어지거나 다치게 하기',pts:1},
+    {text:'"사실은..."으로 시작하는 반전을 암시하기',pts:1},
+    {text:'"라면"이 2번 이상 자연스럽게 등장하게 하기',pts:1},
+    {text:'주인공이 뭔가를 갑자기 거절하게 만들기',pts:1},
+    {text:'주인공이 뭔가를 충동구매하게 만들기',pts:1},
+    {text:'노래나 콧노래가 등장하게 하기',pts:1},
+    {text:'주인공이 길을 잃게 만들기',pts:1},
+    {text:'등장인물이 핸드폰을 분실하게 하기',pts:1},
+    {text:'갑작스러운 재회 장면을 만들기',pts:1},
+    {text:'"커피"가 2번 이상 등장하게 하기',pts:1},
+  ],
+  medium: [
+    {text:'주인공이 사실 외계인임을 암시하기',pts:2},
+    {text:'"사실 이 모든 건 꿈이었다" 결말로 유도하기',pts:2},
+    {text:'주인공이 시간 여행자임을 암시하기',pts:2},
+    {text:'로맨스가 갑자기 요리 대결로 전환되게 하기',pts:2},
+    {text:'주인공이 갑자기 외국으로 떠나게 하기',pts:2},
+    {text:'악당이 사실 착한 사람이었다는 반전 심기',pts:2},
+    {text:'"고양이"가 이야기의 핵심 열쇠가 되게 하기',pts:2},
+    {text:'주인공이 기억을 잃게 만들기',pts:2},
+    {text:'이야기 분위기를 갑자기 공포물로 급전환하기',pts:2},
+    {text:'주인공이 사실 로봇임을 암시하기',pts:2},
+    {text:'"돈까스"가 이야기의 핵심 소재가 되게 하기',pts:2},
+    {text:'주인공이 사실 쌍둥이임을 암시하기',pts:2},
+    {text:'전혀 다른 시대(과거/미래)로 갑자기 이동하기',pts:2},
+    {text:'주인공이 사실 유명인임을 암시하기',pts:2},
+    {text:'유령이나 귀신이 등장하게 하기',pts:2},
+  ],
+  hard: [
+    {text:'사랑·연애 관련 단어 없이 로맨스 분위기 완성하기',pts:3},
+    {text:'주인공 이름 한 번도 쓰지 않고 이야기 이끌기',pts:3},
+    {text:'이야기 속에 또 다른 이야기 구조 만들기 (액자소설)',pts:3},
+    {text:'주인공이 이야기가 소설임을 깨닫게 하기 (메타픽션)',pts:3},
+    {text:'대화문 없이 이야기를 전개하기',pts:3},
+    {text:'모든 문장을 의문형으로 유도하기',pts:3},
+  ]
+};
+
+const GENRES = [
+  {name:'눈물 나는 첫사랑',emoji:'💔',
+   opening:'그날 버스 정류장에서 처음 그 사람을 봤을 때, 나는 아무것도 모른 척했다.',
+   goal:'첫사랑의 설레임과 아련함을 담은 감동적인 이야기를 완성하세요.'},
+  {name:'긴장감 넘치는 스릴러',emoji:'🔪',
+   opening:'문이 잠겨 있었다. 분명히 내가 잠그지 않은 문이.',
+   goal:'끝까지 긴장감을 유지하며 반전이 있는 스릴러를 완성하세요.'},
+  {name:'훈훈한 우정 이야기',emoji:'🤝',
+   opening:'10년 만에 연락이 온 번호를 보며, 나는 한참을 망설였다.',
+   goal:'오래된 우정의 따뜻함이 느껴지는 감동적인 이야기를 완성하세요.'},
+  {name:'코믹 좌충우돌 여행기',emoji:'✈️',
+   opening:'비행기 표를 끊고 나서야 알았다. 나는 여권이 없었다.',
+   goal:'웃기고 황당한 사건이 연속으로 일어나는 여행기를 완성하세요.'},
+  {name:'무서운 귀신 이야기',emoji:'👻',
+   opening:'이사 첫날 밤, 옆방에서 아무도 없는데 발소리가 들렸다.',
+   goal:'소름 돋는 공포 분위기를 끝까지 유지하며 이야기를 완성하세요.'},
+  {name:'달달한 직장 로맨스',emoji:'💼',
+   opening:'새벽 2시, 야근 중인 사무실에서 그 사람과 눈이 마주쳤다.',
+   goal:'직장에서 시작되는 설레는 로맨스 이야기를 완성하세요.'},
+  {name:'통쾌한 복수극',emoji:'😤',
+   opening:'3년 전 그 일을 잊지 않았다. 이제 때가 됐다.',
+   goal:'통쾌하고 시원한 복수 이야기를 완성하세요.'},
+  {name:'따뜻한 가족 이야기',emoji:'👨‍👩‍👧',
+   opening:'엄마가 보낸 문자에는 딱 두 글자만 있었다. "밥 먹어."',
+   goal:'가족의 사랑과 따뜻함이 느껴지는 이야기를 완성하세요.'},
+];
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let db = null;
+let roomRef = null;
+let roomListener = null;
+
+const S = {
+  uid: null, name: '익명', emoji: '📝',
+  roomCode: null, isHost: false,
+  role: null, mission: null, genre: null,
+  settings: {turns:2, timer:60, view:'sentence'},
+  myVote1: null, myVote2: null,
+  roleConfirmed: false,
+  timerInterval: null,
+  ttsUtterance: null,
+  gameData: null,
+};
+
+// ══════════════════════════════════════════════
+//  FIREBASE INIT
+// ══════════════════════════════════════════════
+function initFirebase() {
+  const raw = document.getElementById('fbConfigInput').value.trim();
+  let cfg;
+  try {
+    cfg = JSON.parse(raw);
+  } catch(e) {
+    document.getElementById('fbError').textContent = '❌ JSON 형식이 맞지 않아요. 다시 확인해보세요.';
+    return;
+  }
+  if (!cfg.databaseURL) {
+    document.getElementById('fbError').textContent = '❌ databaseURL이 없어요. Realtime Database를 활성화했나요?';
+    return;
+  }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    db = firebase.database();
+    db.ref('.info/connected').once('value', snap => {
+      localStorage.setItem('fbConfig', raw);
+      show('s-home');
+    }).catch(()=>{
+      document.getElementById('fbError').textContent = '❌ 연결 실패. Firebase 설정을 다시 확인해보세요.';
+    });
+  } catch(e) {
+    document.getElementById('fbError').textContent = '❌ ' + e.message;
+  }
+}
+
+function tryAutoInit() {
+  const saved = localStorage.getItem('fbConfig');
+  if (!saved) { show('s-setup'); return; }
+  try {
+    const cfg = JSON.parse(saved);
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    db = firebase.database();
+    show('s-home');
+  } catch(e) { show('s-setup'); }
+}
+
+// ══════════════════════════════════════════════
+//  SCREEN
+// ══════════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+// ══════════════════════════════════════════════
+//  HOME
+// ══════════════════════════════════════════════
+function selectEmoji(el) {
+  document.querySelectorAll('.emoji-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  S.emoji = el.dataset.e;
+}
+
+function getMyName() {
+  return document.getElementById('myName').value.trim() || '익명' + Math.floor(Math.random()*1000);
+}
+
+function genUID() {
+  return Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+}
+
+function genCode() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+async function createRoom() {
+  S.uid = S.uid || localStorage.getItem('uid') || genUID();
+  localStorage.setItem('uid', S.uid);
+  S.name = getMyName();
+  S.isHost = true;
+
+  const code = genCode();
+  S.roomCode = code;
+  roomRef = db.ref('rooms/' + code);
+
+  await roomRef.set({
+    host: S.uid,
+    status: 'lobby',
+    settings: {turns:2, timer:60, view:'sentence'},
+    players: {
+      [S.uid]: {name:S.name, emoji:S.emoji, score:0, connected:true}
+    },
+    createdAt: Date.now()
+  });
+
+  listenRoom();
+  show('s-lobby');
+}
+
+async function joinRoom() {
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if (code.length !== 6) { toast('방 코드는 6자리예요!'); return; }
+
+  S.uid = S.uid || localStorage.getItem('uid') || genUID();
+  localStorage.setItem('uid', S.uid);
+  S.name = getMyName();
+  S.isHost = false;
+  S.roomCode = code;
+  roomRef = db.ref('rooms/' + code);
+
+  const snap = await roomRef.once('value');
+  if (!snap.exists()) { toast('방을 찾을 수 없어요 🤔'); return; }
+  const data = snap.val();
+  if (data.status !== 'lobby') { toast('이미 게임이 시작된 방이에요!'); return; }
+
+  const playerCount = Object.keys(data.players||{}).length;
+  if (playerCount >= 8) { toast('방이 꽉 찼어요! (최대 8명)'); return; }
+
+  await roomRef.child('players/' + S.uid).set({
+    name:S.name, emoji:S.emoji, score:0, connected:true
+  });
+
+  listenRoom();
+  show('s-lobby');
+}
+
+function leaveRoom() {
+  if (roomRef) {
+    roomRef.child('players/' + S.uid).remove();
+    if (roomListener) { roomRef.off('value', roomListener); roomListener = null; }
+    roomRef = null;
+  }
+  S.roomCode = null; S.isHost = false;
+  show('s-home');
+}
+
+// ══════════════════════════════════════════════
+//  LOBBY
+// ══════════════════════════════════════════════
+function setSetting(el) {
+  if (!S.isHost) return;
+  const k = el.dataset.k, v = el.dataset.v;
+  document.querySelectorAll(`[data-k="${k}"]`).forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  const val = isNaN(v) ? v : Number(v);
+  roomRef.child('settings/' + k).set(val);
+}
+
+function renderLobby(data) {
+  document.getElementById('lobbyCode').textContent = S.roomCode;
+  const players = data.players || {};
+  const hostId = data.host;
+
+  let html = '';
+  Object.entries(players).forEach(([uid, p]) => {
+    const isHost = uid === hostId;
+    html += `<div class="player-item">
+      <div class="player-emoji">${p.emoji||'📝'}</div>
+      <div class="player-name">${p.name}${isHost?'':''}</div>
+      ${isHost ? '<div class="host-badge">방장</div>' : ''}
+    </div>`;
+  });
+  document.getElementById('playerList').innerHTML = html;
+
+  const cnt = Object.keys(players).length;
+  const isHost = data.host === S.uid;
+  document.getElementById('startBtn').classList.toggle('hidden', !isHost);
+  document.getElementById('waitingForHost').classList.toggle('hidden', isHost);
+  document.getElementById('startBtn').textContent =
+    cnt < 2 ? `🎲 게임 시작! (최소 2명, 현재 ${cnt}명)` : `🎲 게임 시작! (${cnt}명)`;
+  document.getElementById('startBtn').disabled = cnt < 2;
+
+  // sync settings display
+  const settings = data.settings || {};
+  if (settings.turns) {
+    document.querySelectorAll('[data-k="turns"]').forEach(e=>e.classList.remove('on'));
+    document.querySelector(`[data-k="turns"][data-v="${settings.turns}"]`)?.classList.add('on');
+  }
+  if (settings.timer !== undefined) {
+    document.querySelectorAll('[data-k="timer"]').forEach(e=>e.classList.remove('on'));
+    document.querySelector(`[data-k="timer"][data-v="${settings.timer}"]`)?.classList.add('on');
+  }
+  if (settings.view) {
+    document.querySelectorAll('[data-k="view"]').forEach(e=>e.classList.remove('on'));
+    document.querySelector(`[data-k="view"][data-v="${settings.view}"]`)?.classList.add('on');
+  }
+  if (!isHost) {
+    document.getElementById('settingsBox').style.opacity = '0.6';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  START GAME
+// ══════════════════════════════════════════════
+async function startGame() {
+  const snap = await roomRef.once('value');
+  const data = snap.val();
+  const players = data.players || {};
+  const uids = Object.keys(players);
+  if (uids.length < 2) { toast('최소 2명이 필요해요!'); return; }
+
+  // Shuffle
+  const shuffled = [...uids].sort(()=>Math.random()-.5);
+  const spyIdx = Math.floor(Math.random() * uids.length);
+  const spyUid = shuffled[spyIdx];
+
+  // Pick mission
+  const pool = Math.random() < .5 ? MISSIONS.easy : (Math.random() < .7 ? MISSIONS.medium : MISSIONS.hard);
+  const mission = pool[Math.floor(Math.random() * pool.length)];
+
+  // Pick genre
+  const genre = GENRES[Math.floor(Math.random() * GENRES.length)];
+
+  // Build turn order (each player repeats)
+  const settings = data.settings || {turns:2, timer:60, view:'sentence'};
+  let turnOrder = [];
+  for (let i=0; i<settings.turns; i++) turnOrder = turnOrder.concat([...shuffled]);
+
+  await roomRef.update({
+    status: 'role_reveal',
+    spy: spyUid,
+    mission: mission,
+    genre: genre,
+    turnOrder: turnOrder,
+    currentTurnIdx: 0,
+    sentences: [{uid:'__system', text: genre.opening, name:'[첫 문장]'}],
+    confirmedRoles: {},
+    settings: settings,
+    nominations: {},
+    accused: null,
+    defenseText: '',
+    finalVotes: {},
+    result: null,
+  });
+}
+
+// ══════════════════════════════════════════════
+//  ROLE REVEAL
+// ══════════════════════════════════════════════
+function renderRole(data) {
+  const isSpy = data.spy === S.uid;
+  S.role = isSpy ? 'spy' : 'citizen';
+  S.mission = isSpy ? data.mission : null;
+  S.genre = data.genre;
+
+  document.getElementById('roleGenreName').textContent = `${data.genre.emoji} ${data.genre.name}`;
+
+  const front = document.getElementById('cardFront');
+  front.className = 'card-face card-front ' + S.role;
+  document.getElementById('roleIcon').textContent = isSpy ? '🕵️' : '📝';
+  document.getElementById('roleName').textContent = isSpy ? '스파이' : '시민 작가';
+  document.getElementById('roleDesc').textContent = isSpy
+    ? '들키지 않고 비밀 미션을 수행하세요!'
+    : '이야기를 완성하고 스파이를 찾으세요!';
+
+  if (isSpy && data.mission) {
+    document.getElementById('missionBox').style.display = 'block';
+    document.getElementById('missionText').textContent = data.mission.text;
+    document.getElementById('missionPts').textContent =
+      `성공 시 +${data.mission.pts}점 추가 보너스`;
+  } else {
+    document.getElementById('missionBox').style.display = 'none';
+  }
+
+  const confirmed = data.confirmedRoles || {};
+  const total = Object.keys(data.players||{}).length;
+  const done = Object.keys(confirmed).length;
+  document.getElementById('roleWaiting').textContent =
+    S.roleConfirmed ? `${done}/${total}명 확인 완료...` : '';
+}
+
+function flipCard() {
+  const card = document.getElementById('roleCard');
+  if (!card.classList.contains('flipped')) {
+    card.classList.add('flipped');
+    document.getElementById('tapHint').style.display = 'none';
+    document.getElementById('roleOkBtn').style.display = 'block';
+  }
+}
+
+async function confirmRole() {
+  S.roleConfirmed = true;
+  document.getElementById('roleOkBtn').disabled = true;
+  document.getElementById('roleOkBtn').textContent = '✅ 확인 완료!';
+  await roomRef.child('confirmedRoles/' + S.uid).set(true);
+}
+
+// ══════════════════════════════════════════════
+//  GENRE REVEAL
+// ══════════════════════════════════════════════
+function renderGenre(data) {
+  const g = data.genre;
+  document.getElementById('genrePill').textContent = '📚 이번 라운드 장르';
+  document.getElementById('genreEmoji').textContent = g.emoji;
+  document.getElementById('genreTitle').textContent = g.name;
+  document.getElementById('openingBox').textContent = g.opening;
+  document.getElementById('goalBox').innerHTML = `<b>시민 목표:</b> ${g.goal}`;
+  document.getElementById('genreStartBtn').classList.toggle('hidden', data.host !== S.uid);
+}
+
+async function beginWriting() {
+  await roomRef.update({status:'writing', timerStart: Date.now()});
+}
+
+// ══════════════════════════════════════════════
+//  WRITING
+// ══════════════════════════════════════════════
+function renderWriting(data) {
+  const turnOrder = data.turnOrder || [];
+  const idx = data.currentTurnIdx || 0;
+  const currentUid = turnOrder[idx];
+  const isMyTurn = currentUid === S.uid;
+  const players = data.players || {};
+  const settings = data.settings || {};
+  const sentences = data.sentences || [];
+  const total = turnOrder.length;
+
+  document.getElementById('writingProgress').style.width = `${(idx/total)*100}%`;
+  document.getElementById('waitProgress').style.width = `${(idx/total)*100}%`;
+  document.getElementById('waitTurnInfo').textContent = `진행 ${idx}/${total} 턴`;
+
+  const myView = document.getElementById('myTurnView');
+  const waitView = document.getElementById('waitingView');
+
+  if (isMyTurn) {
+    myView.style.display = 'flex';
+    waitView.style.display = 'none';
+    document.getElementById('writingTurnSub').textContent = `${idx+1}번째 문장`;
+
+    // Limited view
+    const viewMode = settings.view || 'sentence';
+    let limited = '';
+    if (sentences.length > 0) {
+      const lastSent = sentences[sentences.length-1];
+      if (viewMode === 'sentence') {
+        limited = lastSent.text;
+        document.getElementById('viewModeLabel').textContent = '마지막 문장';
+      } else if (viewMode === 'chars') {
+        limited = '...' + lastSent.text.slice(-15);
+        document.getElementById('viewModeLabel').textContent = '마지막 15글자만';
+      } else {
+        limited = sentences.map(s=>s.text).join(' ');
+        document.getElementById('viewModeLabel').textContent = '전체 보기';
+      }
+    }
+    document.getElementById('limitedView').textContent = limited;
+
+    // Timer
+    const timerSec = settings.timer || 0;
+    startWritingTimer(timerSec, data.timerStart);
+  } else {
+    myView.style.display = 'none';
+    waitView.style.display = 'flex';
+    const currentPlayer = players[currentUid];
+    document.getElementById('waitingName').textContent =
+      (currentPlayer?.emoji||'📝') + ' ' + (currentPlayer?.name||'누군가') + '의 차례';
+
+    const timerSec = settings.timer || 0;
+    startWaitTimer(timerSec, data.timerStart);
+  }
+}
+
+let timerInterval = null;
+let waitTimerInterval = null;
+
+function startWritingTimer(sec, startTs) {
+  clearInterval(timerInterval);
+  const ring = document.getElementById('timerCircle');
+  const num = document.getElementById('timerNum');
+  const btn = document.getElementById('submitBtn');
+
+  if (!sec) {
+    ring.style.strokeDashoffset = '0';
+    num.textContent = '∞';
+    btn.disabled = false;
+    return;
+  }
+
+  function tick() {
+    const elapsed = (Date.now() - startTs) / 1000;
+    const left = Math.max(0, sec - elapsed);
+    const pct = left / sec;
+    ring.style.strokeDashoffset = String(157 * (1 - pct));
+    ring.style.stroke = left < 10 ? 'var(--red)' : 'var(--accent)';
+    num.textContent = Math.ceil(left);
+    num.style.color = left < 10 ? 'var(--red)' : 'var(--accent)';
+    btn.disabled = false;
+
+    if (left <= 0) {
+      clearInterval(timerInterval);
+      autoSubmit();
+    }
+  }
+  tick();
+  timerInterval = setInterval(tick, 500);
+}
+
+function startWaitTimer(sec, startTs) {
+  clearInterval(waitTimerInterval);
+  const ring = document.getElementById('waitTimerCircle');
+  const num = document.getElementById('waitTimerNum');
+
+  if (!sec) { num.textContent = '∞'; return; }
+
+  function tick() {
+    const elapsed = (Date.now() - startTs) / 1000;
+    const left = Math.max(0, sec - elapsed);
+    const pct = left / sec;
+    ring.style.strokeDashoffset = String(157 * (1 - pct));
+    ring.style.stroke = left < 10 ? 'var(--red)' : 'var(--accent)';
+    num.textContent = Math.ceil(left);
+  }
+  tick();
+  waitTimerInterval = setInterval(tick, 500);
+}
+
+function updateCharCount() {
+  const v = document.getElementById('writeInput').value;
+  document.getElementById('charCount').textContent = v.length;
+}
+
+async function autoSubmit() {
+  const v = document.getElementById('writeInput').value.trim();
+  await doSubmitSentence(v || '(시간 초과)');
+}
+
+async function submitSentence() {
+  const v = document.getElementById('writeInput').value.trim();
+  if (!v) { toast('문장을 입력해주세요!'); return; }
+  clearInterval(timerInterval);
+  document.getElementById('submitBtn').disabled = true;
+  await doSubmitSentence(v);
+}
+
+async function doSubmitSentence(text) {
+  const snap = await roomRef.once('value');
+  const data = snap.val();
+  const turnOrder = data.turnOrder || [];
+  const idx = data.currentTurnIdx || 0;
+  const nextIdx = idx + 1;
+  const sentences = data.sentences || [];
+
+  sentences.push({uid: S.uid, name: S.name, emoji: S.emoji, text: text});
+
+  if (nextIdx >= turnOrder.length) {
+    await roomRef.update({sentences, status:'narrating', currentTurnIdx: nextIdx});
+  } else {
+    await roomRef.update({sentences, currentTurnIdx: nextIdx, timerStart: Date.now()});
+  }
+  document.getElementById('writeInput').value = '';
+  document.getElementById('charCount').textContent = '0';
+}
+
+// ══════════════════════════════════════════════
+//  NARRATION
+// ══════════════════════════════════════════════
+function renderNarration(data) {
+  const sentences = data.sentences || [];
+  const genre = data.genre || {};
+  document.getElementById('storyTitleDisplay').textContent =
+    `${genre.emoji||'📖'} 오늘의 망작`;
+  document.getElementById('storyMeta').textContent =
+    `총 ${sentences.length}개 문장 · 장르: ${genre.name||''}`;
+
+  let html = '';
+  sentences.forEach((s, i) => {
+    const isSystem = s.uid === '__system';
+    html += `<div class="sentence-card" id="sc-${i}">
+      <div class="sentence-text">${s.text}</div>
+      <div class="sentence-author">${isSystem ? '📖 첫 문장' : (s.emoji+' '+s.name)}</div>
+    </div>`;
+  });
+  document.getElementById('storyScroll').innerHTML = html;
+  document.getElementById('goVoteBtn').classList.toggle('hidden', data.host !== S.uid);
+}
+
+let ttsQueue = [];
+let ttsIdx = 0;
+
+function startTTS() {
+  if (!('speechSynthesis' in window)) { toast('이 브라우저는 TTS를 지원하지 않아요'); return; }
+  stopTTS();
+  const cards = document.querySelectorAll('.sentence-card');
+  ttsQueue = Array.from(cards).map((c,i)=>({
+    text: c.querySelector('.sentence-text').textContent,
+    idx: i
+  }));
+  ttsIdx = 0;
+  document.getElementById('ttsPlayBtn').classList.add('playing');
+  document.getElementById('ttsPlayBtn').textContent = '🔊 낭독 중...';
+  speakNext();
+}
+
+function speakNext() {
+  if (ttsIdx >= ttsQueue.length) {
+    stopTTS(); return;
+  }
+  const item = ttsQueue[ttsIdx];
+  document.querySelectorAll('.sentence-card').forEach(c=>c.classList.remove('speaking'));
+  document.getElementById('sc-' + item.idx)?.classList.add('speaking');
+  document.getElementById('sc-' + item.idx)?.scrollIntoView({behavior:'smooth',block:'center'});
+
+  const u = new SpeechSynthesisUtterance(item.text);
+  u.lang = 'ko-KR'; u.rate = 0.9; u.pitch = 0.95;
+  u.onend = () => { ttsIdx++; setTimeout(speakNext, 400); };
+  u.onerror = () => { ttsIdx++; speakNext(); };
+  speechSynthesis.speak(u);
+}
+
+function stopTTS() {
+  speechSynthesis.cancel();
+  document.querySelectorAll('.sentence-card').forEach(c=>c.classList.remove('speaking'));
+  document.getElementById('ttsPlayBtn').classList.remove('playing');
+  document.getElementById('ttsPlayBtn').textContent = '🔊 낭독 시작';
+}
+
+async function goToVote() {
+  stopTTS();
+  await roomRef.update({status:'vote1', nominations:{}});
+}
+
+// ══════════════════════════════════════════════
+//  VOTE 1
+// ══════════════════════════════════════════════
+function renderVote1(data) {
+  const players = data.players || {};
+  const noms = data.nominations || {};
+
+  let html = '';
+  Object.entries(players).forEach(([uid, p]) => {
+    if (uid === S.uid) return;
+    const selected = S.myVote1 === uid;
+    const cnt = Object.values(noms).filter(v=>v===uid).length;
+    html += `<div class="vote-item${selected?' selected':''}" onclick="selectVote1('${uid}')">
+      <div class="vote-item-emoji">${p.emoji||'📝'}</div>
+      <div class="vote-item-name">${p.name}</div>
+      <div style="font-size:.75rem;color:var(--muted)">${cnt > 0 ? cnt+'표' : ''}</div>
+      <div class="vote-item-check">${selected ? '🎯' : ''}</div>
+    </div>`;
+  });
+  document.getElementById('voteList').innerHTML = html;
+
+  const voted = Object.keys(noms).length;
+  const total = Object.keys(players).length;
+  document.getElementById('vote1Status').textContent = `${voted}/${total}명 투표 완료`;
+  document.getElementById('submitVoteBtn').disabled = !S.myVote1;
+}
+
+function selectVote1(uid) {
+  S.myVote1 = uid;
+  document.querySelectorAll('.vote-item').forEach(el=>el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('submitVoteBtn').disabled = false;
+}
+
+async function submitVote1() {
+  if (!S.myVote1) return;
+  await roomRef.child('nominations/' + S.uid).set(S.myVote1);
+  document.getElementById('submitVoteBtn').disabled = true;
+  document.getElementById('submitVoteBtn').textContent = '✅ 투표 완료!';
+
+  // Check if all voted
+  const snap = await roomRef.once('value');
+  const data = snap.val();
+  const noms = data.nominations || {};
+  const players = data.players || {};
+  if (Object.keys(noms).length >= Object.keys(players).length && data.host === S.uid) {
+    // Tally
+    const tally = {};
+    Object.values(noms).forEach(uid => { tally[uid] = (tally[uid]||0)+1; });
+    const accused = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0]?.[0];
+    await roomRef.update({status:'defense', accused, defenseText: ''});
+  }
+}
+
+// ══════════════════════════════════════════════
+//  DEFENSE
+// ══════════════════════════════════════════════
+function renderDefense(data) {
+  const accused = data.accused;
+  const players = data.players || {};
+  const p = players[accused] || {};
+  const isAccused = accused === S.uid;
+
+  document.getElementById('accusedName').textContent = (p.emoji||'📝') + ' ' + (p.name||'???');
+
+  if (isAccused) {
+    document.getElementById('defensPrompt').textContent = '당신이 가장 많은 지목을 받았습니다.\n30초 안에 억울함을 호소하세요!';
+    document.getElementById('defenseInput').style.display = 'block';
+    document.getElementById('defenseSpeech').style.display = 'none';
+    document.getElementById('submitDefenseBtn').style.display = 'block';
+    document.getElementById('defenseWaiting').textContent = '';
+    startDefenseTimer(30);
+  } else {
+    document.getElementById('defensPrompt').textContent = `${p.name}이(가) 변론하고 있습니다...`;
+    document.getElementById('defenseInput').style.display = 'none';
+    document.getElementById('submitDefenseBtn').style.display = 'none';
+    document.getElementById('defenseWaiting').textContent = '변론이 끝나면 최종 투표가 시작돼요';
+    const speech = data.defenseText || '';
+    if (speech) {
+      document.getElementById('defenseSpeech').style.display = 'block';
+      document.getElementById('defenseSpeech').textContent = speech;
+    }
+  }
+}
+
+let defenseTimerInterval = null;
+function startDefenseTimer(sec) {
+  clearInterval(defenseTimerInterval);
+  const ring = document.getElementById('defenseTimer');
+  const num = document.getElementById('defenseTimerNum');
+  let left = sec;
+
+  function tick() {
+    ring.style.strokeDashoffset = String(157 * (left/sec));
+    num.textContent = left;
+    if (left <= 0) { clearInterval(defenseTimerInterval); autoSubmitDefense(); }
+    left--;
+  }
+  tick();
+  defenseTimerInterval = setInterval(tick, 1000);
+}
+
+async function autoSubmitDefense() {
+  const v = document.getElementById('defenseInput').value.trim() || '(할 말 없음)';
+  await doSubmitDefense(v);
+}
+
+async function submitDefense() {
+  const v = document.getElementById('defenseInput').value.trim() || '(할 말 없음)';
+  clearInterval(defenseTimerInterval);
+  await doSubmitDefense(v);
+}
+
+async function doSubmitDefense(text) {
+  document.getElementById('submitDefenseBtn').disabled = true;
+  await roomRef.update({defenseText: text, status:'vote2', finalVotes:{}});
+}
+
+// ══════════════════════════════════════════════
+//  VOTE 2
+// ══════════════════════════════════════════════
+function renderVote2(data) {
+  const accused = data.accused;
+  const players = data.players || {};
+  const p = players[accused] || {};
+  const votes = data.finalVotes || {};
+  const myVoted = votes[S.uid];
+  const isAccused = accused === S.uid;
+
+  document.getElementById('accusedInVote2').textContent = p.name || '???';
+  document.getElementById('accusedEmoji2').textContent = p.emoji || '📝';
+  document.getElementById('accusedName2').textContent = p.name || '???';
+  document.getElementById('defensePreview2').textContent = data.defenseText || '—';
+
+  const voted = Object.keys(votes).length;
+  const total = Object.keys(players).length;
+  document.getElementById('vote2Status').textContent =
+    myVoted ? `${voted}/${total}명 투표 완료 (결과 기다리는 중...)` : '';
+
+  document.querySelectorAll('.execute-btn,.acquit-btn').forEach(b => {
+    b.disabled = myVoted || isAccused;
+  });
+  if (isAccused) {
+    document.getElementById('vote2Status').textContent = '당신에 대한 투표가 진행 중이에요...';
+  }
+}
+
+async function submitVote2(choice) {
+  S.myVote2 = choice;
+  await roomRef.child('finalVotes/' + S.uid).set(choice);
+  document.querySelectorAll('.execute-btn,.acquit-btn').forEach(b=>b.disabled=true);
+
+  const snap = await roomRef.once('value');
+  const data = snap.val();
+  const votes = data.finalVotes || {};
+  const players = data.players || {};
+  if (Object.keys(votes).length >= Object.keys(players).length && data.host === S.uid) {
+    await resolveVote2(data);
+  }
+}
+
+async function resolveVote2(data) {
+  const votes = data.finalVotes || {};
+  const execute = Object.values(votes).filter(v=>v==='execute').length;
+  const acquit = Object.values(votes).filter(v=>v==='acquit').length;
+  const spyExecuted = execute > acquit;
+  const accused = data.accused;
+  const isSpyCaught = spyExecuted && accused === data.spy;
+  const spyEscaped = !spyExecuted || (spyExecuted && accused !== data.spy);
+
+  // Score calculation
+  const players = data.players || {};
+  const newScores = {};
+  Object.keys(players).forEach(uid => {
+    newScores[uid] = players[uid].score || 0;
+  });
+
+  const mission = data.mission || {};
+  const missionSuccess = checkMissionSuccess(data);
+
+  if (isSpyCaught) {
+    // Citizens win
+    Object.keys(players).forEach(uid => {
+      if (uid !== data.spy) newScores[uid] = (newScores[uid]||0) + 2;
+    });
+  } else if (accused !== data.spy && spyExecuted) {
+    // Wrong person executed (spy gets +2, victim gets nothing)
+    newScores[data.spy] = (newScores[data.spy]||0) + 2;
+  } else {
+    // Spy escaped
+    newScores[data.spy] = (newScores[data.spy]||0) + 2;
+  }
+
+  if (missionSuccess && !isSpyCaught) {
+    newScores[data.spy] = (newScores[data.spy]||0) + (mission.pts||1);
+  }
+
+  // Update scores in players
+  const updatedPlayers = {...players};
+  Object.keys(updatedPlayers).forEach(uid => {
+    updatedPlayers[uid] = {...updatedPlayers[uid], score: newScores[uid]};
+  });
+
+  const commentary = await getAICommentary(data, isSpyCaught, missionSuccess);
+
+  await roomRef.update({
+    status: 'result',
+    players: updatedPlayers,
+    result: {
+      spyExecuted, accused,
+      spyCaught: isSpyCaught,
+      missionSuccess,
+      commentary,
+      executeVotes: execute,
+      acquitVotes: acquit,
+    }
+  });
+}
+
+function checkMissionSuccess(data) {
+  const sentences = (data.sentences||[]).map(s=>s.text).join(' ');
+  const mission = data.mission;
+  if (!mission) return false;
+  const text = mission.text;
+  if (text.includes('국밥')) return (sentences.match(/국밥/g)||[]).length >= 2;
+  if (text.includes('치킨')) return sentences.includes('치킨');
+  if (text.includes('라면')) return (sentences.match(/라면/g)||[]).length >= 2;
+  if (text.includes('커피')) return (sentences.match(/커피/g)||[]).length >= 2;
+  if (text.includes('외계인')) return sentences.includes('외계인');
+  if (text.includes('꿈이었다')) return sentences.includes('꿈');
+  if (text.includes('로봇')) return sentences.includes('로봇');
+  if (text.includes('고양이')) return (sentences.match(/고양이/g)||[]).length >= 2;
+  // For others, default to host judgment (set randomly for now)
+  return Math.random() > 0.5;
+}
+
+// ══════════════════════════════════════════════
+//  RESULT
+// ══════════════════════════════════════════════
+function renderResult(data) {
+  const result = data.result || {};
+  const players = data.players || {};
+  const spy = data.spy;
+  const spyPlayer = players[spy] || {};
+  const mission = data.mission || {};
+
+  // Headline
+  let headline = '';
+  if (result.spyCaught) headline = '🎉 시민 팀 승리! 스파이를 잡았습니다!';
+  else if (result.accused !== spy) headline = '😈 스파이 승리! 무고한 시민을 희생시켰습니다!';
+  else headline = '🕵️ 스파이 탈출 성공! 스파이의 대승리!';
+  document.getElementById('resultHeadline').textContent = headline;
+
+  const revealCard = document.getElementById('revealCard');
+  revealCard.className = 'reveal-card ' + (result.spyCaught ? 'citizens-won' : 'spy-won');
+  document.getElementById('spyRevealEmoji').textContent = spyPlayer.emoji || '🕵️';
+  document.getElementById('spyRevealName').textContent = spyPlayer.name || '???';
+  document.getElementById('missionRevealText').textContent = mission.text || '—';
+  const statusEl = document.getElementById('missionStatus');
+  if (result.missionSuccess && !result.spyCaught) {
+    statusEl.textContent = '✅ 미션 성공! +' + (mission.pts||1) + '점 획득';
+    statusEl.className = 'mission-result-status success';
+  } else {
+    statusEl.textContent = '❌ 미션 실패 또는 들켜서 무효';
+    statusEl.className = 'mission-result-status fail';
+  }
+
+  // Scores
+  const sorted = Object.entries(players).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+  let shtml = '';
+  sorted.forEach(([uid, p], i) => {
+    const isSpy = uid === spy;
+    shtml += `<div class="score-row">
+      <div style="font-size:.9rem;font-weight:700;color:var(--muted);width:20px">${i+1}</div>
+      <div class="score-emoji">${p.emoji||'📝'}</div>
+      <div class="score-name">${p.name}${isSpy?' 🕵️':''}</div>
+      <div class="score-pts">${p.score||0}점</div>
+    </div>`;
+  });
+  document.getElementById('scoresBox').innerHTML = shtml;
+
+  // AI commentary
+  document.getElementById('aiCommentary').textContent =
+    result.commentary || '평론가가 잠시 자리를 비웠습니다...';
+
+  document.getElementById('replayBtn').classList.toggle('hidden', data.host !== S.uid);
+}
+
+// ══════════════════════════════════════════════
+//  AI COMMENTARY
+// ══════════════════════════════════════════════
+async function getAICommentary(data, spyCaught, missionSuccess) {
+  const sentences = (data.sentences||[]).map(s=>s.text).join(' ');
+  const genre = data.genre?.name || '알 수 없는 장르';
+  const spyName = data.players?.[data.spy]?.name || '???';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:300,
+        messages:[{role:'user', content:
+          `당신은 권위적인 문학 평론가 "김세준"입니다. 아래 소설을 엄격하게 평론해주세요. 반드시 한국어로, 3~4문장으로, 진지한 척하면서 은근히 박하게 평가하고 별점(★ 5개 중)으로 마무리하세요. 너무 길게 쓰지 마세요.
+          
+장르: ${genre}
+소설 내용: ${sentences.slice(0,400)}
+결과: 스파이(${spyName})는 ${spyCaught?'체포됨':'탈출함'}. 미션은 ${missionSuccess?'성공':'실패'}.`
+        }]
+      })
+    });
+    const json = await res.json();
+    return json.content?.[0]?.text || getFallbackCommentary();
+  } catch(e) {
+    return getFallbackCommentary();
+  }
+}
+
+function getFallbackCommentary() {
+  const comments = [
+    '이번 작품은 기승전결이 아닌 기승기승기기의 구조를 채택하여 독자를 극도의 혼란으로 이끌었습니다. 문학적 실험이라 부르기엔 다소 무모하고, 사고라 부르기엔 너무 반복적입니다. 그럼에도 집단 창작의 생동감은 인정합니다. ★★☆☆☆',
+    '줄거리를 요약하려 했으나 불가능했습니다. 아마도 작가들 중 누군가가 처음부터 포기했거나, 아니면 모두가 서로 다른 소설을 쓴 것으로 추정됩니다. 독창성 면에서만큼은 높이 평가할 수 있습니다. ★☆☆☆☆',
+    '본 작품은 현대 한국 문학의 새로운 지평을 열었다고 평가하기엔 무리가 있습니다. 그러나 이 정도 수준의 혼돈을 이렇게 짧은 시간에 만들어냈다는 점은 나름 감탄스럽습니다. ★★★☆☆',
+  ];
+  return comments[Math.floor(Math.random() * comments.length)];
+}
+
+// ══════════════════════════════════════════════
+//  REPLAY / HOME
+// ══════════════════════════════════════════════
+async function replayGame() {
+  // Reset game state but keep players and scores
+  S.myVote1 = null; S.myVote2 = null; S.roleConfirmed = false;
+  await roomRef.update({
+    status: 'lobby', spy:null, mission:null, genre:null,
+    turnOrder:null, currentTurnIdx:0, sentences:null,
+    confirmedRoles:null, nominations:null, accused:null,
+    defenseText:'', finalVotes:null, result:null
+  });
+}
+
+function goHomeFromResult() {
+  if (roomListener) { roomRef.off('value', roomListener); roomListener = null; }
+  roomRef = null; S.roomCode = null; S.isHost = false;
+  S.myVote1 = null; S.myVote2 = null; S.roleConfirmed = false;
+  show('s-home');
+}
+
+// ══════════════════════════════════════════════
+//  MAIN LISTENER
+// ══════════════════════════════════════════════
+function listenRoom() {
+  if (roomListener) { roomRef.off('value', roomListener); }
+  roomListener = roomRef.on('value', snap => {
+    if (!snap.exists()) { toast('방이 사라졌어요!'); show('s-home'); return; }
+    const data = snap.val();
+    S.gameData = data;
+    S.isHost = data.host === S.uid;
+
+    // Check if player still in room
+    if (!data.players?.[S.uid] && data.status !== 'lobby') return;
+
+    switch(data.status) {
+      case 'lobby':
+        renderLobby(data);
+        if (!document.getElementById('s-lobby').classList.contains('on')) show('s-lobby');
+        break;
+      case 'role_reveal':
+        renderRole(data);
+        show('s-role');
+        // Check if all confirmed
+        const confirmed = data.confirmedRoles || {};
+        const total = Object.keys(data.players||{}).length;
+        if (Object.keys(confirmed).length >= total && data.host === S.uid) {
+          roomRef.update({status:'genre_reveal'});
+        }
+        break;
+      case 'genre_reveal':
+        renderGenre(data);
+        show('s-genre');
+        break;
+      case 'writing':
+        renderWriting(data);
+        show('s-writing');
+        break;
+      case 'narrating':
+        renderNarration(data);
+        show('s-narration');
+        break;
+      case 'vote1':
+        renderVote1(data);
+        show('s-vote1');
+        // Auto-advance if all voted
+        const noms = data.nominations || {};
+        const players = data.players || {};
+        if (Object.keys(noms).length >= Object.keys(players).length && data.host === S.uid) {
+          const tally = {};
+          Object.values(noms).forEach(uid => { tally[uid] = (tally[uid]||0)+1; });
+          const accused = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0]?.[0];
+          roomRef.update({status:'defense', accused, defenseText:''});
+        }
+        break;
+      case 'defense':
+        renderDefense(data);
+        show('s-defense');
+        break;
+      case 'vote2':
+        renderVote2(data);
+        show('s-vote2');
+        // Auto-advance if all voted
+        const v2 = data.finalVotes || {};
+        const p2 = data.players || {};
+        if (Object.keys(v2).length >= Object.keys(p2).length && data.host === S.uid) {
+          if (data.result === null || data.result === undefined) {
+            resolveVote2(data);
+          }
+        }
+        break;
+      case 'result':
+        renderResult(data);
+        show('s-result');
+        break;
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  S.uid = localStorage.getItem('uid') || null;
+  tryAutoInit();
+});
+</script>
+</body>
+</html>
