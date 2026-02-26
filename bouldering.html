@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>손가락 볼더링 🧗</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+:root{
+  --bg:#0D0D0F; --wall:#141418; --wall2:#1A1A20;
+  --border:#2A2A35; --text:#F2F0E8; --muted:#6B6880;
+  --chalk:#F5F0E8; --accent:#E8FF47; --red:#FF3B3B;
+  --green:#39FF8F; --blue:#47C6FF; --orange:#FF7A1A;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;overflow:hidden;user-select:none}
+
+/* ─── SCREENS ─── */
+.scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;z-index:1;overflow-y:auto}
+.scr.on{opacity:1;pointer-events:all}
+
+/* ─── SETUP SCREEN ─── */
+#s-setup{justify-content:center;padding:24px;gap:16px}
+.setup-card{background:var(--wall);border:1px solid var(--border);border-radius:20px;
+  padding:28px;max-width:460px;width:100%}
+.setup-logo{font-family:'Black Han Sans';font-size:2rem;color:var(--accent);
+  text-align:center;margin-bottom:4px;letter-spacing:.05em}
+.setup-sub{font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:20px;line-height:1.7}
+.setup-step{background:#0D0D0F;border-radius:10px;padding:12px 14px;margin-bottom:10px;
+  font-size:.78rem;line-height:1.8;border-left:2px solid var(--accent)}
+.setup-step b{color:var(--accent)}
+.fb-textarea{width:100%;background:#0D0D0F;border:1px solid var(--border);border-radius:10px;
+  color:var(--text);padding:12px;font-size:.72rem;font-family:monospace;resize:vertical;
+  min-height:120px;margin:10px 0;outline:none;line-height:1.6}
+.fb-textarea:focus{border-color:var(--accent)}
+.skip-btn{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);
+  border-radius:12px;padding:10px;font-size:.8rem;cursor:pointer;margin-top:6px;
+  font-family:'Noto Sans KR'}
+.skip-btn:hover{border-color:var(--muted);color:var(--text)}
+
+/* ─── HOME SCREEN ─── */
+#s-home{justify-content:flex-end;padding-bottom:0}
+.home-wall{position:absolute;inset:0;overflow:hidden}
+#homeBgCanvas{width:100%;height:100%}
+.home-content{position:relative;z-index:2;width:100%;max-width:420px;
+  padding:0 24px 40px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.home-logo-wrap{text-align:center;margin-bottom:8px}
+.home-logo{font-family:'Black Han Sans';font-size:3rem;color:var(--accent);
+  line-height:1;letter-spacing:.05em;
+  text-shadow:0 0 40px rgba(232,255,71,.4),0 4px 20px rgba(0,0,0,.8)}
+.home-sub{font-size:.82rem;color:var(--chalk);opacity:.7;margin-top:4px;letter-spacing:.05em}
+.name-row{width:100%;display:flex;gap:8px}
+.name-input{flex:1;background:rgba(20,20,24,.9);border:1.5px solid var(--border);
+  border-radius:12px;color:var(--text);font-size:.95rem;padding:13px 16px;
+  outline:none;transition:border-color .2s;font-family:'Noto Sans KR'}
+.name-input:focus{border-color:var(--accent)}
+.btn-main{width:100%;background:var(--accent);color:#0D0D0F;font-family:'Black Han Sans';
+  font-size:1.3rem;border:none;border-radius:14px;padding:17px;cursor:pointer;
+  letter-spacing:.08em;transition:transform .1s,filter .1s;
+  box-shadow:0 4px 20px rgba(232,255,71,.3)}
+.btn-main:active{transform:scale(.96)}
+.btn-ghost{width:100%;background:rgba(20,20,24,.9);border:1.5px solid var(--border);
+  color:var(--text);font-size:.95rem;font-weight:700;border-radius:14px;padding:14px;
+  cursor:pointer;transition:border-color .2s;font-family:'Noto Sans KR'}
+.btn-ghost:hover{border-color:var(--accent)}
+
+/* ─── GAME SCREEN ─── */
+#s-game{padding:0}
+.game-hud{position:absolute;top:0;left:0;right:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:env(safe-area-inset-top, 12px) 16px 10px;
+  background:linear-gradient(var(--bg),transparent)}
+.hud-left{display:flex;flex-direction:column;gap:2px}
+.hud-stage{font-family:'Black Han Sans';font-size:1.1rem;color:var(--accent)}
+.hud-score{font-size:.78rem;color:var(--muted)}
+.hud-lives{display:flex;gap:5px}
+.life{font-size:1.3rem;transition:transform .3s,opacity .3s}
+.life.lost{opacity:.25;transform:scale(.8)}
+.hud-combo{font-family:'Black Han Sans';font-size:1rem;color:var(--orange);
+  min-width:60px;text-align:center;transition:all .2s}
+
+#gameCanvas{width:100%;height:100%;display:block;touch-action:none}
+
+/* ─── PHASE OVERLAY ─── */
+.phase-overlay{position:absolute;inset:0;z-index:20;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;transition:opacity .3s}
+.phase-overlay.hidden{opacity:0}
+.phase-label{font-family:'Black Han Sans';font-size:2.5rem;
+  text-shadow:0 4px 20px rgba(0,0,0,.8);letter-spacing:.05em}
+.phase-sub{font-size:.9rem;color:var(--chalk);margin-top:8px;opacity:.7}
+.timer-bar-wrap{position:absolute;bottom:0;left:0;right:0;height:4px;
+  background:var(--border)}
+.timer-bar{height:100%;background:var(--accent);transition:width .1s linear;
+  box-shadow:0 0 8px var(--accent)}
+
+/* ─── RESULT OVERLAY ─── */
+#resultOverlay{position:absolute;inset:0;z-index:30;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(13,13,15,.85);backdrop-filter:blur(8px);
+  gap:12px;padding:24px;opacity:0;pointer-events:none;transition:opacity .3s}
+#resultOverlay.on{opacity:1;pointer-events:all}
+.result-icon{font-size:4rem;animation:bounceIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes bounceIn{from{transform:scale(0)}to{transform:scale(1)}}
+.result-label{font-family:'Black Han Sans';font-size:2.2rem;letter-spacing:.08em}
+.result-score-delta{font-family:'Black Han Sans';font-size:1.4rem;
+  color:var(--accent);animation:fadeUp .4s .2s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── GAMEOVER SCREEN ─── */
+#s-gameover{justify-content:center;padding:24px;gap:20px}
+.go-title{font-family:'Black Han Sans';font-size:2.5rem;color:var(--red);
+  text-align:center;text-shadow:0 0 30px rgba(255,59,59,.4)}
+.go-score-box{background:var(--wall);border:1px solid var(--border);border-radius:20px;
+  padding:28px;width:100%;max-width:380px;text-align:center}
+.go-score-label{font-size:.72rem;color:var(--muted);letter-spacing:.2em;margin-bottom:8px}
+.go-score-num{font-family:'Black Han Sans';font-size:3.5rem;color:var(--accent);
+  line-height:1}
+.go-score-detail{display:flex;justify-content:center;gap:24px;
+  margin-top:14px;font-size:.78rem;color:var(--muted)}
+.go-score-detail b{color:var(--text);display:block;font-size:.95rem}
+
+/* ─── LEADERBOARD ─── */
+.lb-box{background:var(--wall);border:1px solid var(--border);border-radius:16px;
+  padding:20px;width:100%;max-width:380px}
+.lb-title{font-size:.68rem;color:var(--muted);letter-spacing:.2em;font-weight:700;
+  margin-bottom:14px;text-align:center}
+.lb-row{display:flex;align-items:center;gap:10px;padding:9px 4px;
+  border-bottom:1px solid rgba(255,255,255,.04)}
+.lb-row:last-child{border:none}
+.lb-rank{font-family:'Black Han Sans';font-size:1rem;width:28px;text-align:center;
+  color:var(--muted)}
+.lb-rank.gold{color:#FFD700}
+.lb-rank.silver{color:#C0C0C0}
+.lb-rank.bronze{color:#CD7F32}
+.lb-name{flex:1;font-weight:700;font-size:.9rem}
+.lb-pts{font-family:'Black Han Sans';font-size:1rem;color:var(--accent)}
+.lb-stage{font-size:.72rem;color:var(--muted)}
+.lb-mine{background:rgba(232,255,71,.06);border-radius:8px;
+  outline:1px solid rgba(232,255,71,.2)}
+.lb-empty{text-align:center;color:var(--muted);font-size:.82rem;padding:16px}
+
+/* ─── LEADERBOARD SCREEN ─── */
+#s-lb{justify-content:flex-start;padding:24px;gap:16px}
+.lb-header{width:100%;max-width:380px;display:flex;align-items:center;justify-content:space-between}
+.lb-screen-title{font-family:'Black Han Sans';font-size:1.5rem;color:var(--accent)}
+.back-btn{background:var(--wall);border:1px solid var(--border);border-radius:50%;
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;cursor:pointer}
+
+/* ─── TOAST ─── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--wall);border:1px solid var(--border);border-radius:10px;
+  padding:10px 20px;font-size:.84rem;z-index:999;
+  opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* ─── PARTICLE ─── */
+.particle{position:fixed;pointer-events:none;z-index:50;font-size:1.2rem;
+  animation:particle .8s ease-out forwards}
+@keyframes particle{
+  0%{opacity:1;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(.3)}}
+
+/* ─── COUNT OVERLAY ─── */
+#countOverlay{position:absolute;inset:0;z-index:25;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;transition:opacity .2s}
+#countOverlay.on{opacity:1}
+#countNum{font-family:'Black Han Sans';font-size:6rem;color:var(--accent);
+  text-shadow:0 0 60px rgba(232,255,71,.6);
+  animation:countPop .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes countPop{from{transform:scale(1.8);opacity:0}to{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ══ -->
+<div id="s-setup" class="scr">
+  <div class="setup-card">
+    <div class="setup-logo">🧗 손가락 볼더링</div>
+    <div class="setup-sub">리더보드를 위해 Firebase 설정이 필요해요<br>건너뛰면 오프라인으로도 즐길 수 있어요!</div>
+    <div class="setup-step"><b>① Firebase 콘솔</b> → 프로젝트 설정 → 내 앱 → <b>구성</b> 탭 선택</div>
+    <div class="setup-step"><b>② Realtime Database</b> 활성화 (빌드 → Realtime Database → 데이터베이스 만들기 → 테스트 모드)</div>
+    <div class="setup-step"><b>③</b> 아래에 <b>{ } 전체</b> 붙여넣기</div>
+    <textarea class="fb-textarea" id="fbInput" placeholder='{
+  "apiKey": "...",
+  "databaseURL": "https://...",
+  "projectId": "...",
+  ...
+}'></textarea>
+    <button class="btn-main" onclick="initFB()">🔥 연결하기</button>
+    <button class="skip-btn" onclick="skipFB()">리더보드 없이 플레이</button>
+    <div id="fbErr" style="color:var(--red);font-size:.76rem;margin-top:8px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div id="s-home" class="scr">
+  <div class="home-wall"><canvas id="homeBgCanvas"></canvas></div>
+  <div class="home-content">
+    <div class="home-logo-wrap">
+      <div class="home-logo">손가락<br>볼더링</div>
+      <div class="home-sub">루트 파인딩 배틀 🧗</div>
+    </div>
+    <input class="name-input" id="playerName" placeholder="닉네임 입력" maxlength="12" style="width:100%">
+    <button class="btn-main" onclick="startGame()">🎯 START</button>
+    <button class="btn-ghost" onclick="goLB()">🏆 리더보드</button>
+  </div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="s-game" class="scr">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="game-hud">
+    <div class="hud-left">
+      <div class="hud-stage" id="hudStage">STAGE 1</div>
+      <div class="hud-score" id="hudScore">0점</div>
+    </div>
+    <div class="hud-combo" id="hudCombo"></div>
+    <div class="hud-lives" id="hudLives">
+      <span class="life" id="l0">🤜</span>
+      <span class="life" id="l1">🤜</span>
+      <span class="life" id="l2">🤜</span>
+    </div>
+  </div>
+
+  <div class="phase-overlay" id="phaseOverlay">
+    <div class="phase-label" id="phaseLabel"></div>
+    <div class="phase-sub" id="phaseSub"></div>
+    <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar"></div></div>
+  </div>
+
+  <div id="countOverlay"><div id="countNum">3</div></div>
+
+  <div id="resultOverlay">
+    <div class="result-icon" id="resIcon"></div>
+    <div class="result-label" id="resLabel"></div>
+    <div class="result-score-delta" id="resDelta"></div>
+  </div>
+</div>
+
+<!-- ══ GAMEOVER ══ -->
+<div id="s-gameover" class="scr">
+  <div class="go-title" id="goTitle">GAME OVER</div>
+  <div class="go-score-box">
+    <div class="go-score-label">FINAL SCORE</div>
+    <div class="go-score-num" id="goScoreNum">0</div>
+    <div class="go-score-detail">
+      <div><b id="goStage">1</b>스테이지</div>
+      <div><b id="goClears">0</b>완등</div>
+      <div><b id="goMaxCombo">0</b>최대콤보</div>
+    </div>
+  </div>
+  <div class="lb-box">
+    <div class="lb-title">🏆 리더보드</div>
+    <div id="goLbList"><div class="lb-empty">기록 없음</div></div>
+  </div>
+  <button class="btn-main" style="width:100%;max-width:380px" onclick="startGame()">🔄 다시 도전</button>
+  <button class="btn-ghost" style="width:100%;max-width:380px" onclick="show('s-home')">🏠 홈으로</button>
+</div>
+
+<!-- ══ LEADERBOARD ══ -->
+<div id="s-lb" class="scr">
+  <div class="lb-header">
+    <div class="lb-screen-title">🏆 리더보드</div>
+    <div class="back-btn" onclick="show('s-home')">←</div>
+  </div>
+  <div class="lb-box" style="max-width:380px;width:100%">
+    <div class="lb-title">전체 랭킹</div>
+    <div id="lbList"><div class="lb-empty">불러오는 중...</div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  FIREBASE
+// ══════════════════════════════════════════════
+let db = null;
+
+function initFB() {
+  if (typeof firebase === 'undefined') {
+    document.getElementById('fbErr').textContent = '❌ Firebase SDK 로딩 중... 잠시 후 다시 시도해주세요.';
+    return;
+  }
+  const raw = document.getElementById('fbInput').value.trim();
+  let cfg;
+  try { cfg = JSON.parse(raw); } catch(e) {
+    document.getElementById('fbErr').textContent = '❌ JSON 형식이 맞지 않아요. { }로 시작하고 끝나는지 확인해보세요.'; return;
+  }
+  if (!cfg.databaseURL) {
+    document.getElementById('fbErr').textContent = '❌ databaseURL이 없어요! 아래 값을 추가해주세요: "databaseURL": "https://mangzak-b98cd-default-rtdb.firebaseio.com"'; return;
+  }
+  try {
+    firebase.apps.forEach(app => app.delete());
+    firebase.initializeApp(cfg);
+    db = firebase.database();
+    localStorage.setItem('fbCfg', raw);
+    show('s-home'); initHomeBg();
+  } catch(e) { document.getElementById('fbErr').textContent = '❌ ' + e.message; }
+}
+
+function skipFB() { show('s-home'); initHomeBg(); }
+
+function tryAutoFB() {
+  if (typeof firebase === 'undefined') {
+    console.warn('Firebase SDK not loaded yet, retrying...');
+    setTimeout(tryAutoFB, 500);
+    return;
+  }
+  const saved = localStorage.getItem('fbCfg');
+  if (!saved) { show('s-setup'); return; }
+  try {
+    const cfg = JSON.parse(saved);
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    db = firebase.database();
+    show('s-home'); initHomeBg();
+  } catch(e) { show('s-setup'); }
+}
+
+async function submitScore(name, score, stage, clears, maxCombo) {
+  if (!db) return;
+  const ref = db.ref('bouldering/scores').push();
+  await ref.set({ name, score, stage, clears, maxCombo, ts: Date.now() });
+}
+
+async function fetchLeaderboard(targetEl, myName, myScore) {
+  if (!db) { targetEl.innerHTML = '<div class="lb-empty">Firebase 미연결 (오프라인 모드)</div>'; return; }
+  const snap = await db.ref('bouldering/scores').orderByChild('score').limitToLast(20).once('value');
+  const rows = [];
+  snap.forEach(c => rows.push(c.val()));
+  rows.sort((a,b) => b.score - a.score);
+  const top10 = rows.slice(0,10);
+  if (!top10.length) { targetEl.innerHTML = '<div class="lb-empty">아직 기록이 없어요!</div>'; return; }
+  const medals = ['gold','silver','bronze'];
+  targetEl.innerHTML = top10.map((r,i) => {
+    const isMine = r.name === myName && r.score === myScore;
+    return `<div class="lb-row${isMine?' lb-mine':''}">
+      <div class="lb-rank${medals[i]?' '+medals[i]:''}">
+        ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+      </div>
+      <div>
+        <div class="lb-name">${r.name}</div>
+        <div class="lb-stage">${r.stage}스테이지 · ${r.clears}완등</div>
+      </div>
+      <div class="lb-pts">${r.score.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  SCREEN
+// ══════════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+// ══════════════════════════════════════════════
+//  HOME BG CANVAS (animated holds)
+// ══════════════════════════════════════════════
+let homeBgAnim = null;
+function initHomeBg() {
+  const canvas = document.getElementById('homeBgCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const HOLD_SHAPES = ['circle','square','diamond','triangle'];
+  const COLORS = ['#3A3A4A','#2E2E3E','#353545','#2A2A3A'];
+  const holds = Array.from({length:60}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: 10 + Math.random() * 22,
+    shape: HOLD_SHAPES[Math.floor(Math.random()*4)],
+    color: COLORS[Math.floor(Math.random()*4)],
+    phase: Math.random() * Math.PI * 2,
+    speed: .002 + Math.random() * .003,
+  }));
+
+  function draw() {
+    ctx.fillStyle = '#0D0D0F';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // Wall texture lines
+    ctx.strokeStyle = '#141418'; ctx.lineWidth = 1;
+    for(let y=0; y<canvas.height; y+=40) {
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+    }
+    holds.forEach(h => {
+      h.phase += h.speed;
+      const glow = (Math.sin(h.phase)+1)/2;
+      ctx.save();
+      ctx.translate(h.x, h.y);
+      ctx.fillStyle = h.color;
+      ctx.shadowColor = 'rgba(232,255,71,.15)';
+      ctx.shadowBlur = glow * 12;
+      drawHoldShape(ctx, h.shape, h.r);
+      ctx.restore();
+    });
+    homeBgAnim = requestAnimationFrame(draw);
+  }
+  if (homeBgAnim) cancelAnimationFrame(homeBgAnim);
+  draw();
+}
+
+function drawHoldShape(ctx, shape, r) {
+  ctx.beginPath();
+  if (shape === 'circle') { ctx.arc(0,0,r,0,Math.PI*2); }
+  else if (shape === 'square') { ctx.rect(-r*.8,-r*.8,r*1.6,r*1.6); }
+  else if (shape === 'diamond') {
+    ctx.moveTo(0,-r); ctx.lineTo(r*.7,0); ctx.lineTo(0,r); ctx.lineTo(-r*.7,0);
+  }
+  else { // triangle
+    ctx.moveTo(0,-r); ctx.lineTo(r*.85,r*.6); ctx.lineTo(-r*.85,r*.6);
+  }
+  ctx.closePath(); ctx.fill();
+}
+
+// ══════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════
+const G = {
+  stage: 1, score: 0, lives: 3, combo: 0, maxCombo: 0, clears: 0,
+  phase: 'idle', // observe | challenge | result
+  holds: [], route: [], routeIdx: 0,
+  timerStart: 0, timerDur: 0,
+  timerRAF: null, gameRAF: null,
+  inputLocked: false,
+  flashIdx: 0, flashInterval: null,
+  playerName: '클라이머',
+};
+
+// ══════════════════════════════════════════════
+//  STAGE CONFIG
+// ══════════════════════════════════════════════
+function stageConfig(stage) {
+  const cfg = {
+    routeLen: Math.min(4 + Math.floor(stage * .6), 12),
+    totalHolds: Math.min(16 + stage * 2, 60),
+    observeSec: Math.max(4 - stage * .12, 2),
+    fakeHolds: stage >= 16 ? Math.floor((stage-15)/2)+1 : 0,
+    crossMove: stage >= 16,
+    flashDelay: Math.max(700 - stage * 15, 250),
+    baseScore: stage * 100 + 200,
+  };
+  return cfg;
+}
+
+// ══════════════════════════════════════════════
+//  CANVAS SETUP
+// ══════════════════════════════════════════════
+const gameCanvas = document.getElementById('gameCanvas');
+const gctx = gameCanvas.getContext('2d');
+let CW, CH, CELL_W, CELL_H, COLS, ROWS, HOLD_R;
+
+function resizeCanvas() {
+  CW = gameCanvas.width = window.innerWidth;
+  CH = gameCanvas.height = window.innerHeight;
+  COLS = 6; ROWS = 10;
+  CELL_W = CW / COLS;
+  CELL_H = (CH - 100) / ROWS; // top HUD space
+  HOLD_R = Math.min(CELL_W, CELL_H) * .28;
+}
+
+// ══════════════════════════════════════════════
+//  HOLD GENERATION
+// ══════════════════════════════════════════════
+const HOLD_COLORS = ['#FF4B6E','#FF7A1A','#FFD600','#39FF8F','#47C6FF','#B94FFF','#FF4BE8'];
+const HOLD_SHAPES_G = ['circle','square','diamond','triangle','pentagon'];
+
+function gridPos(col, row) {
+  const margin = CELL_W * .15;
+  return {
+    x: col * CELL_W + CELL_W/2 + (Math.random()-.5) * margin,
+    y: 80 + row * CELL_H + CELL_H/2 + (Math.random()-.5) * margin,
+  };
+}
+
+function generateHolds(cfg) {
+  const used = new Set();
+  const holds = [];
+  let id = 0;
+
+  // Place all holds on grid (avoid duplication)
+  const positions = [];
+  for (let r=0; r<ROWS; r++) {
+    for (let c=0; c<COLS; c++) positions.push({c,r});
+  }
+  // Shuffle
+  for (let i=positions.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [positions[i],positions[j]]=[positions[j],positions[i]];
+  }
+
+  for (let i=0; i<Math.min(cfg.totalHolds, positions.length); i++) {
+    const {c,r} = positions[i];
+    const key = `${c},${r}`;
+    if (used.has(key)) continue;
+    used.add(key);
+    const p = gridPos(c, r);
+    holds.push({
+      id: id++,
+      x: p.x, y: p.y,
+      col: c, row: r,
+      color: HOLD_COLORS[Math.floor(Math.random()*HOLD_COLORS.length)],
+      type: HOLD_TYPES[Math.floor(Math.random()*HOLD_TYPES.length)],
+      shape: 'hold',
+      r: HOLD_R,
+      isRoute: false, routeOrder: -1,
+      isFake: false,
+      isStart: false, isTop: false,
+      state: 'idle', // idle | flash | correct | wrong | dimmed
+      flashT: 0, hitT: 0,
+    });
+  }
+  return holds;
+}
+
+function buildRoute(holds, cfg) {
+  // Pick start from bottom rows, top from top rows
+  const bottom = holds.filter(h => h.row >= ROWS-2);
+  const top = holds.filter(h => h.row <= 1);
+
+  const startH = bottom[Math.floor(Math.random()*bottom.length)] || holds[0];
+  let topH;
+  do { topH = top[Math.floor(Math.random()*top.length)] || holds[holds.length-1]; }
+  while (topH.id === startH.id);
+
+  startH.isStart = true;
+  topH.isTop = true;
+
+  // Build route by progressively picking holds that go upward
+  const route = [startH];
+  let cur = startH;
+  const targetLen = cfg.routeLen - 2; // minus start and top
+
+  // Available holds (exclude start and top)
+  let avail = holds.filter(h => h.id !== startH.id && h.id !== topH.id);
+
+  for (let i=0; i<targetLen; i++) {
+    // Prefer holds that are above current and within reasonable distance
+    const candidates = avail.filter(h =>
+      h.row < cur.row && Math.abs(h.col - cur.col) <= 2
+    );
+    if (!candidates.length) break;
+
+    // Cross-move: sometimes jump to other side
+    let pick;
+    if (cfg.crossMove && i > 0 && Math.random() < .35) {
+      // Pick from opposite side
+      const side = cur.col < 3 ? candidates.filter(h=>h.col>3) : candidates.filter(h=>h.col<3);
+      pick = side.length ? side[Math.floor(Math.random()*side.length)] : candidates[Math.floor(Math.random()*candidates.length)];
+    } else {
+      pick = candidates[Math.floor(Math.random()*candidates.length)];
+    }
+
+    route.push(pick);
+    avail = avail.filter(h => h.id !== pick.id);
+    cur = pick;
+  }
+
+  route.push(topH);
+
+  // Mark route holds
+  route.forEach((h,i) => { h.isRoute = true; h.routeOrder = i; });
+
+  // Add fake holds near route holds (for high stages)
+  if (cfg.fakeHolds > 0) {
+    const routeIds = new Set(route.map(h=>h.id));
+    const notRoute = avail.filter(h => !routeIds.has(h.id));
+    let added = 0;
+    route.forEach(rh => {
+      if (added >= cfg.fakeHolds) return;
+      // Find a hold near this route hold
+      const near = notRoute.filter(h =>
+        Math.abs(h.x - rh.x) < HOLD_R * 3 && Math.abs(h.y - rh.y) < HOLD_R * 3
+      );
+      if (near.length) {
+        const fake = near[Math.floor(Math.random()*near.length)];
+        fake.isFake = true;
+        fake.color = rh.color; // Same color as nearby route hold!
+        added++;
+      }
+    });
+  }
+
+  return route;
+}
+
+// ══════════════════════════════════════════════
+//  REALISTIC HOLD DRAWING
+// ══════════════════════════════════════════════
+
+const HOLD_COLORS = ['#E8391A','#FF7A00','#F5C518','#1DB954','#1E90FF','#9B59B6','#FF1493','#00CED1'];
+const HOLD_TYPES  = ['jug','jug','crimp','sloper','pinch','pocket','jug','crimp'];
+
+// 결정론적 난수 (홀드마다 항상 같은 텍스처)
+function pseudoRand(n) {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function shadeColor(hex, amt) {
+  let r = parseInt(hex.slice(1,3),16);
+  let g = parseInt(hex.slice(3,5),16);
+  let b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.min(255,Math.max(0,r+amt))},${Math.min(255,Math.max(0,g+amt))},${Math.min(255,Math.max(0,b+amt))})`;
+}
+
+// 홀드 타입별 외곽 path
+function holdPath(ctx, type, r) {
+  switch(type) {
+    case 'jug':
+      ctx.arc(0, -r*0.08, r, 0, Math.PI*2); break;
+    case 'crimp': {
+      const w=r*1.5, h=r*0.65, cr=r*0.22;
+      ctx.moveTo(-w+cr,-h); ctx.arcTo(w,-h,w,h,cr);
+      ctx.arcTo(w,h,-w,h,cr); ctx.arcTo(-w,h,-w,-h,cr);
+      ctx.arcTo(-w,-h,w,-h,cr); break;
+    }
+    case 'sloper':
+      ctx.ellipse(0,0,r*1.25,r*0.82,0,0,Math.PI*2); break;
+    case 'pinch': {
+      const w=r*0.62, h=r*1.32, cr=r*0.28;
+      ctx.moveTo(-w+cr,-h); ctx.arcTo(w,-h,w,h,cr);
+      ctx.arcTo(w,h,-w,h,cr); ctx.arcTo(-w,h,-w,-h,cr);
+      ctx.arcTo(-w,-h,w,-h,cr); break;
+    }
+    case 'pocket':
+      ctx.arc(0,0,r,0,Math.PI*2); break;
+    default:
+      ctx.arc(0,0,r,0,Math.PI*2);
+  }
+}
+
+// 3D 리얼 홀드 렌더러
+function drawRealisticHold(ctx, h, colorOverride, alpha, glowColor, glowStr) {
+  ctx.save();
+  ctx.globalAlpha = alpha !== undefined ? alpha : 1;
+  const r = h.r;
+  const col = colorOverride || h.color;
+  const type = h.type || 'jug';
+
+  // 1. 드롭 섀도우 (벽에 드리운 그림자)
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.75)';
+  ctx.shadowBlur = r * 0.9;
+  ctx.shadowOffsetX = r * 0.28;
+  ctx.shadowOffsetY = r * 0.38;
+  ctx.fillStyle = 'rgba(0,0,0,0.01)';
+  ctx.beginPath(); holdPath(ctx, type, r); ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // 2. 홀드 몸체 테두리 (두께감)
+  ctx.save();
+  ctx.beginPath(); holdPath(ctx, type, r*1.06); ctx.closePath();
+  ctx.fillStyle = shadeColor(col, -50);
+  ctx.fill();
+  ctx.restore();
+
+  // 3. 메인 몸체 - 라디얼 그라디언트으로 3D 입체
+  ctx.save();
+  ctx.beginPath(); holdPath(ctx, type, r); ctx.closePath();
+  const grd = ctx.createRadialGradient(-r*0.28,-r*0.38,r*0.04,-r*0.1,-r*0.1,r*1.45);
+  grd.addColorStop(0,   shadeColor(col, 65));
+  grd.addColorStop(0.3, col);
+  grd.addColorStop(0.7, shadeColor(col,-28));
+  grd.addColorStop(1,   shadeColor(col,-60));
+  ctx.fillStyle = grd;
+  ctx.fill();
+  ctx.restore();
+
+  // 4. 표면 텍스처 (거친 사암 느낌)
+  ctx.save();
+  ctx.beginPath(); holdPath(ctx, type, r*0.93); ctx.closePath();
+  ctx.clip();
+  const seed = h.id * 7919;
+  for (let i=0;i<30;i++) {
+    const px = (pseudoRand(seed+i*3)-.5)*r*1.8;
+    const py = (pseudoRand(seed+i*3+1)-.5)*r*1.8;
+    const pr = pseudoRand(seed+i*3+2)*r*0.11+0.4;
+    ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2);
+    ctx.fillStyle = `rgba(0,0,0,${0.07+pseudoRand(seed+i)*0.13})`;
+    ctx.fill();
+  }
+  for (let i=0;i<10;i++) {
+    const px = (pseudoRand(seed+i*5+100)-.5)*r*1.4;
+    const py = (pseudoRand(seed+i*5+101)-.5)*r*1.4;
+    ctx.beginPath(); ctx.arc(px,py,pseudoRand(seed+i+200)*r*0.07+0.3,0,Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${0.04+pseudoRand(seed+i+300)*0.07})`;
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 5. 하이라이트 (윗쪽 빛 반사)
+  ctx.save();
+  ctx.beginPath(); holdPath(ctx, type, r*0.88); ctx.closePath();
+  const hl = ctx.createLinearGradient(0,-r,0,r*0.3);
+  hl.addColorStop(0,  'rgba(255,255,255,0.38)');
+  hl.addColorStop(0.4,'rgba(255,255,255,0.09)');
+  hl.addColorStop(1,  'rgba(255,255,255,0)');
+  ctx.fillStyle = hl; ctx.fill();
+  ctx.restore();
+
+  // 6. 포켓: 구멍
+  if (type === 'pocket') {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(0,r*0.1,r*0.37,0,Math.PI*2);
+    const hole = ctx.createRadialGradient(r*0.05,r*0.05,0,0,r*0.1,r*0.4);
+    hole.addColorStop(0,'rgba(0,0,0,0.95)');
+    hole.addColorStop(1,'rgba(0,0,0,0.2)');
+    ctx.fillStyle = hole; ctx.fill();
+    ctx.restore();
+  }
+
+  // 7. 글로우 링
+  if (glowColor && glowStr > 0) {
+    ctx.save();
+    ctx.shadowColor = glowColor; ctx.shadowBlur = r * glowStr;
+    ctx.strokeStyle = glowColor; ctx.lineWidth = r*0.13;
+    ctx.globalAlpha = 0.88;
+    ctx.beginPath(); holdPath(ctx, type, r*1.06); ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 8. 볼트 (나사머리)
+  ctx.save();
+  const bR = r*0.14;
+  const bGrd = ctx.createRadialGradient(-bR*0.3,-bR*0.3,0,0,0,bR);
+  bGrd.addColorStop(0,'#999'); bGrd.addColorStop(0.5,'#555'); bGrd.addColorStop(1,'#2A2A2A');
+  ctx.beginPath(); ctx.arc(0,0,bR,0,Math.PI*2);
+  ctx.fillStyle = bGrd; ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = bR*0.38; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-bR*0.6,0); ctx.lineTo(bR*0.6,0);
+  ctx.moveTo(0,-bR*0.6); ctx.lineTo(0,bR*0.6);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+// 초크 가루 효과
+function drawChalk(ctx, h, amount) {
+  if (amount <= 0) return;
+  ctx.save();
+  const r = h.r;
+  ctx.globalAlpha = amount * 0.5;
+  for (let i=0;i<20;i++) {
+    const angle = (Math.PI*2*i/20) + pseudoRand(h.id*3+i)*0.5;
+    const dist = r*(0.88+pseudoRand(h.id*5+i)*0.65);
+    const pr = pseudoRand(h.id*7+i)*r*0.16+0.8;
+    ctx.beginPath();
+    ctx.arc(h.x+Math.cos(angle)*dist, h.y+Math.sin(angle)*dist, pr, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(240,235,225,${0.3+pseudoRand(h.id+i)*0.45})`;
+    ctx.fill();
+  }
+  ctx.globalAlpha = amount * 0.22;
+  for (let i=0;i<5;i++) {
+    const px = h.x+(pseudoRand(h.id*11+i)-.5)*r*1.1;
+    const py = h.y+(pseudoRand(h.id*13+i)-.5)*r*0.9 - r*0.1;
+    ctx.beginPath();
+    ctx.ellipse(px,py,r*0.32,r*0.16,pseudoRand(h.id+i)*Math.PI,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(245,240,230,0.85)'; ctx.fill();
+  }
+  ctx.restore();
+}
+
+// 메인 홀드 그리기 (상태 기반)
+function drawHold(ctx, h, phase) {
+  ctx.save();
+  ctx.translate(h.x, h.y);
+  const now = performance.now();
+
+  if (phase === 'observe') {
+    if (h.state === 'flash') {
+      const pulse = 0.55 + 0.45*Math.sin(now*0.012);
+      drawRealisticHold(ctx, h, h.color, 1, h.color, 2.2+pulse);
+      ctx.restore(); drawChalk(ctx, h, 0.55); ctx.save(); ctx.translate(h.x, h.y);
+      // 번호 배지
+      ctx.beginPath(); ctx.arc(0,-h.r*0.06,h.r*0.44,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,0,0,0.82)'; ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font=`bold ${h.r*0.54}px 'Black Han Sans'`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(h.routeOrder+1, 0, 0);
+    } else if (h.isRoute && h.state==='dimmed') {
+      drawRealisticHold(ctx, h, h.color, 0.28, null, 0);
+    } else {
+      drawRealisticHold(ctx, h, '#3A3848', 0.82, null, 0);
+    }
+
+  } else if (phase === 'challenge') {
+    if (h.state === 'correct') {
+      const t = Math.min(1,(now-h.hitT)/500);
+      drawRealisticHold(ctx, h, '#1DB954', 1, '#39FF8F', Math.max(0,2.5*(1-t)));
+      ctx.restore(); drawChalk(ctx, h, 0.85); ctx.save(); ctx.translate(h.x, h.y);
+      if (t < 0.85) {
+        ctx.globalAlpha = 1-t;
+        ctx.fillStyle='#fff'; ctx.font=`bold ${h.r*0.7}px 'Black Han Sans'`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('✓', 0, -h.r*0.45*t);
+      }
+    } else if (h.state === 'wrong') {
+      const t = Math.min(1,(now-h.hitT)/400);
+      const shake = t<0.6 ? Math.sin(t*42)*5*(1-t*1.6) : 0;
+      ctx.translate(shake,0);
+      drawRealisticHold(ctx, h, '#E8391A', 1, '#FF3B3B', 2.5*(1-t));
+    } else if (h.isStart) {
+      drawRealisticHold(ctx, h, '#1DB954', 0.92, '#39FF8F', 1.3);
+      ctx.restore(); drawChalk(ctx, h, 0.38); ctx.save(); ctx.translate(h.x, h.y);
+      ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.font=`bold ${h.r*0.54}px 'Black Han Sans'`;
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('S',0,0);
+    } else if (h.isTop) {
+      drawRealisticHold(ctx, h, '#F5C518', 0.92, '#FFD600', 1.6);
+      ctx.restore(); drawChalk(ctx, h, 0.38); ctx.save(); ctx.translate(h.x, h.y);
+      ctx.fillStyle='rgba(0,0,0,0.82)'; ctx.font=`bold ${h.r*0.54}px 'Black Han Sans'`;
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('T',0,0);
+    } else {
+      drawRealisticHold(ctx, h, '#454060', 1, null, 0);
+      if (pseudoRand(h.id*31) > 0.52) {
+        ctx.restore(); drawChalk(ctx, h, pseudoRand(h.id*17)*0.28); ctx.save(); ctx.translate(h.x, h.y);
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
+function drawConnectLine(ctx, from, to, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = '#E8FF47';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([8,6]);
+  ctx.lineDashOffset = -performance.now()*0.04;
+  ctx.shadowColor = '#E8FF47'; ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(to.x,to.y);
+  ctx.stroke(); ctx.restore();
+}
+
+// 합판 벽 패턴 (T-너트 패널)
+let wallPatternCache = null;
+function getWallPattern(ctx) {
+  if (wallPatternCache) return ctx.createPattern(wallPatternCache,'repeat');
+  const pc = document.createElement('canvas');
+  pc.width = 120; pc.height = 120;
+  const pctx = pc.getContext('2d');
+  // 합판 베이스
+  pctx.fillStyle = '#1C1A26'; pctx.fillRect(0,0,120,120);
+  // 나뭇결
+  for (let y=0;y<120;y+=2.5) {
+    pctx.strokeStyle = `rgba(${28+Math.random()*14},${24+Math.random()*10},${36+Math.random()*14},0.45)`;
+    pctx.lineWidth = Math.random()*1.2+0.3;
+    pctx.beginPath(); pctx.moveTo(0,y); pctx.lineTo(120,y); pctx.stroke();
+  }
+  // 패널 경계
+  pctx.strokeStyle = 'rgba(8,6,14,0.9)'; pctx.lineWidth = 2.5;
+  pctx.strokeRect(0,0,120,120);
+  pctx.strokeStyle = 'rgba(55,50,70,0.28)'; pctx.lineWidth = 1;
+  pctx.strokeRect(2.5,2.5,115,115);
+  // T-너트 구멍
+  [[30,30],[90,30],[60,60],[30,90],[90,90]].forEach(([nx,ny]) => {
+    pctx.beginPath(); pctx.arc(nx,ny,3.2,0,Math.PI*2);
+    pctx.fillStyle='rgba(6,4,12,0.92)'; pctx.fill();
+    pctx.beginPath(); pctx.arc(nx,ny,5,0,Math.PI*2);
+    pctx.strokeStyle='rgba(80,70,105,0.45)'; pctx.lineWidth=1; pctx.stroke();
+  });
+  wallPatternCache = pc;
+  return ctx.createPattern(pc,'repeat');
+}
+
+function renderGame() {
+  // 합판 벽 배경
+  const pat = getWallPattern(gctx);
+  gctx.fillStyle = pat || '#1C1A26';
+  gctx.fillRect(0,0,CW,CH);
+
+  // 비네트 (짐 조명 효과)
+  const vig = gctx.createRadialGradient(CW/2,CH/2,CH*0.28,CW/2,CH/2,CH*0.88);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,0.48)');
+  gctx.fillStyle = vig; gctx.fillRect(0,0,CW,CH);
+
+  // 패널 구분선
+  gctx.strokeStyle = 'rgba(6,5,12,0.85)'; gctx.lineWidth = 3;
+  for (let c=0;c<=COLS;c++){gctx.beginPath();gctx.moveTo(c*CELL_W,80);gctx.lineTo(c*CELL_W,CH);gctx.stroke();}
+  for (let r=0;r<=ROWS;r++){gctx.beginPath();gctx.moveTo(0,80+r*CELL_H);gctx.lineTo(CW,80+r*CELL_H);gctx.stroke();}
+
+  // 연결선
+  if (G.phase==='observe') {
+    const shown=G.route.filter(h=>h.state!=='hidden'&&h.routeOrder<G.flashIdx);
+    for(let i=0;i<shown.length-1;i++) drawConnectLine(gctx,shown[i],shown[i+1],.42);
+  }
+  if (G.phase==='challenge') {
+    const done=G.route.filter(h=>h.state==='correct');
+    for(let i=0;i<done.length-1;i++) drawConnectLine(gctx,done[i],done[i+1],.62);
+  }
+
+  G.holds.forEach(h => drawHold(gctx, h, G.phase));
+  G.gameRAF = requestAnimationFrame(renderGame);
+}
+
+
+// ══════════════════════════════════════════════
+//  GAME LOOP
+// ══════════════════════════════════════════════
+function startGame() {
+  G.stage = 1; G.score = 0; G.lives = 3; G.combo = 0; G.maxCombo = 0; G.clears = 0;
+  G.playerName = document.getElementById('playerName').value.trim() || '클라이머';
+  resizeCanvas();
+  updateHUD();
+  show('s-game');
+  if (G.gameRAF) cancelAnimationFrame(G.gameRAF);
+  renderGame();
+  setTimeout(() => loadStage(), 300);
+}
+
+function loadStage() {
+  if (G.flashInterval) clearInterval(G.flashInterval);
+  if (G.timerRAF) cancelAnimationFrame(G.timerRAF);
+
+  const cfg = stageConfig(G.stage);
+  G.holds = generateHolds(cfg);
+  G.route = buildRoute(G.holds, cfg);
+  G.routeIdx = 0;
+  G.inputLocked = true;
+  G.phase = 'observe';
+
+  // Reset hold states
+  G.holds.forEach(h => { h.state = 'hidden'; });
+
+  document.getElementById('hudStage').textContent = `STAGE ${G.stage}`;
+  updateHUD();
+
+  // Countdown then flash
+  showCount(3, () => beginObserve(cfg));
+}
+
+function showCount(n, cb) {
+  const overlay = document.getElementById('countOverlay');
+  const num = document.getElementById('countNum');
+  overlay.classList.add('on');
+  num.textContent = n;
+  // Force reflow for re-animation
+  num.style.animation='none'; num.offsetHeight; num.style.animation='';
+  if (n > 0) setTimeout(() => showCount(n-1, cb), 700);
+  else { overlay.classList.remove('on'); cb(); }
+}
+
+function beginObserve(cfg) {
+  G.phase = 'observe';
+  G.flashIdx = 0;
+
+  // Show observe phase label briefly
+  setPhase('👀 루트 암기!', `${Math.round(cfg.observeSec)}초 안에 순서를 외우세요`, true);
+  setTimeout(() => hidePhase(), 1200);
+
+  // Flash holds in order
+  flashNextHold(cfg);
+}
+
+function flashNextHold(cfg) {
+  if (G.flashIdx >= G.route.length) {
+    // All flashed → wait remaining then challenge
+    setTimeout(() => beginChallenge(), 800);
+    return;
+  }
+  const h = G.route[G.flashIdx];
+  h.state = 'flash';
+
+  G.flashIdx++;
+  setTimeout(() => {
+    if (G.flashIdx <= G.route.length) {
+      // Dim after flash
+      if (h.state === 'flash') h.state = 'dimmed';
+    }
+    flashNextHold(cfg);
+  }, cfg.flashDelay);
+}
+
+function beginChallenge() {
+  G.phase = 'challenge';
+  G.holds.forEach(h => { if (h.state !== 'correct') h.state = 'idle'; });
+  G.routeIdx = 0;
+  G.inputLocked = false;
+  G.timerStart = performance.now();
+  G.timerDur = 30000;
+
+  setPhase('✍️ 터치!', '순서대로 홀드를 탭하세요', false);
+  setTimeout(() => hidePhase(), 1200);
+
+  startTimerBar(G.timerDur, () => {
+    // Time's out → fall
+    onFall('⏰ 시간 초과!');
+  });
+}
+
+function startTimerBar(dur, cb) {
+  const bar = document.getElementById('timerBar');
+  const start = performance.now();
+  if (G.timerRAF) cancelAnimationFrame(G.timerRAF);
+  function tick() {
+    const elapsed = performance.now() - start;
+    const pct = Math.max(0, 1 - elapsed/dur);
+    bar.style.width = (pct*100) + '%';
+    bar.style.background = pct > .4 ? 'var(--accent)' : pct > .2 ? 'var(--orange)' : 'var(--red)';
+    if (elapsed >= dur) { cb(); return; }
+    G.timerRAF = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+// ══════════════════════════════════════════════
+//  INPUT
+// ══════════════════════════════════════════════
+function handleTap(cx, cy) {
+  if (G.phase !== 'challenge' || G.inputLocked) return;
+
+  // Find hit hold
+  let hit = null;
+  let bestDist = HOLD_R * 1.8;
+  G.holds.forEach(h => {
+    const dist = Math.hypot(h.x - cx, h.y - cy);
+    if (dist < bestDist) { bestDist = dist; hit = h; }
+  });
+  if (!hit) return;
+  if (hit.state === 'correct') return; // already tapped
+
+  const expected = G.route[G.routeIdx];
+
+  if (hit.id === expected.id) {
+    // Correct!
+    hit.state = 'correct'; hit.hitT = performance.now();
+    spawnParticles(hit.x, hit.y, '✅', '#39FF8F');
+    G.routeIdx++;
+    if (navigator.vibrate) navigator.vibrate(30);
+
+    if (G.routeIdx >= G.route.length) {
+      // Complete!
+      onClear();
+    }
+  } else {
+    // Wrong!
+    hit.state = 'wrong'; hit.hitT = performance.now();
+    spawnParticles(hit.x, hit.y, '❌', '#FF3B3B');
+    if (navigator.vibrate) navigator.vibrate([60,40,60]);
+    G.combo = 0;
+    updateHUD();
+    loseLife();
+  }
+}
+
+gameCanvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  const rect = gameCanvas.getBoundingClientRect();
+  const sx = CW / rect.width, sy = CH / rect.height;
+  handleTap((t.clientX - rect.left)*sx, (t.clientY - rect.top)*sy);
+}, {passive:false});
+gameCanvas.addEventListener('mousedown', e => {
+  const rect = gameCanvas.getBoundingClientRect();
+  const sx = CW / rect.width, sy = CH / rect.height;
+  handleTap((e.clientX - rect.left)*sx, (e.clientY - rect.top)*sy);
+});
+
+// ══════════════════════════════════════════════
+//  CLEAR / FALL
+// ══════════════════════════════════════════════
+function onClear() {
+  G.inputLocked = true;
+  if (G.timerRAF) cancelAnimationFrame(G.timerRAF);
+  document.getElementById('timerBar').style.width = '0%';
+
+  const elapsed = performance.now() - G.timerStart;
+  const timeLeft = Math.max(0, G.timerDur - elapsed);
+  const cfg = stageConfig(G.stage);
+
+  // Score
+  G.combo++;
+  G.maxCombo = Math.max(G.maxCombo, G.combo);
+  G.clears++;
+  const comboMult = G.combo >= 5 ? 2 : G.combo >= 3 ? 1.5 : G.combo >= 2 ? 1.2 : 1;
+  const timeBonus = Math.floor((timeLeft / G.timerDur) * cfg.baseScore * .5);
+  const earned = Math.floor((cfg.baseScore + timeBonus) * comboMult);
+  G.score += earned;
+
+  const comboStr = G.combo >= 2 ? ` 🔥 ×${comboMult.toFixed(1)} 콤보!` : '';
+  showResult('🧗', '완등!', `+${earned.toLocaleString()}점${comboStr}`, true);
+
+  updateHUD();
+  G.stage++;
+  setTimeout(() => {
+    hideResult();
+    loadStage();
+  }, 1800);
+}
+
+function onFall(msg) {
+  G.inputLocked = true;
+  if (G.timerRAF) cancelAnimationFrame(G.timerRAF);
+  document.getElementById('timerBar').style.width = '0%';
+  G.combo = 0;
+  updateHUD();
+  showResult('💀', msg || '추락!', '라이프 -1', false);
+  loseLifeAnim();
+  setTimeout(() => {
+    hideResult();
+    if (G.lives > 0) loadStage();
+    else gameOver();
+  }, 1800);
+}
+
+function loseLife() {
+  if (G.lives <= 0) return;
+  G.lives--;
+  loseLifeAnim();
+  updateHUD();
+  if (G.lives <= 0) {
+    setTimeout(() => {
+      G.inputLocked = true;
+      showResult('💀', '라이프 소진!', '게임 오버', false);
+      setTimeout(() => gameOver(), 2000);
+    }, 500);
+  }
+}
+
+function loseLifeAnim() {
+  const lifeEl = document.getElementById('l' + G.lives);
+  if (lifeEl) lifeEl.classList.add('lost');
+}
+
+async function gameOver() {
+  if (G.gameRAF) cancelAnimationFrame(G.gameRAF);
+  hideResult();
+
+  // Submit score
+  if (G.score > 0) {
+    await submitScore(G.playerName, G.score, G.stage, G.clears, G.maxCombo);
+  }
+
+  document.getElementById('goScoreNum').textContent = G.score.toLocaleString();
+  document.getElementById('goStage').textContent = G.stage;
+  document.getElementById('goClears').textContent = G.clears;
+  document.getElementById('goMaxCombo').textContent = G.maxCombo;
+
+  show('s-gameover');
+  fetchLeaderboard(document.getElementById('goLbList'), G.playerName, G.score);
+}
+
+function goLB() {
+  show('s-lb');
+  fetchLeaderboard(document.getElementById('lbList'), '', -1);
+}
+
+// ══════════════════════════════════════════════
+//  HUD
+// ══════════════════════════════════════════════
+function updateHUD() {
+  document.getElementById('hudScore').textContent = G.score.toLocaleString() + '점';
+  const comboEl = document.getElementById('hudCombo');
+  if (G.combo >= 2) {
+    const mult = G.combo>=5?'×2.0':G.combo>=3?'×1.5':'×1.2';
+    comboEl.textContent = `🔥 ${G.combo}콤보 ${mult}`;
+    comboEl.style.color = G.combo >= 5 ? 'var(--red)' : G.combo >= 3 ? 'var(--orange)' : 'var(--accent)';
+  } else {
+    comboEl.textContent = '';
+  }
+  // Lives
+  for (let i=0;i<3;i++) {
+    document.getElementById('l'+i).classList.toggle('lost', i >= G.lives);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  PHASE OVERLAY
+// ══════════════════════════════════════════════
+function setPhase(label, sub, observe) {
+  const ov = document.getElementById('phaseOverlay');
+  const lbl = document.getElementById('phaseLabel');
+  const s = document.getElementById('phaseSub');
+  lbl.textContent = label;
+  lbl.style.color = observe ? 'var(--accent)' : 'var(--blue)';
+  s.textContent = sub;
+  ov.classList.remove('hidden');
+}
+function hidePhase() { document.getElementById('phaseOverlay').classList.add('hidden'); }
+
+// ══════════════════════════════════════════════
+//  RESULT OVERLAY
+// ══════════════════════════════════════════════
+function showResult(icon, label, delta, good) {
+  document.getElementById('resIcon').textContent = icon;
+  document.getElementById('resLabel').textContent = label;
+  document.getElementById('resLabel').style.color = good ? 'var(--green)' : 'var(--red)';
+  document.getElementById('resDelta').textContent = delta;
+  document.getElementById('resultOverlay').classList.add('on');
+}
+function hideResult() { document.getElementById('resultOverlay').classList.remove('on'); }
+
+// ══════════════════════════════════════════════
+//  PARTICLES
+// ══════════════════════════════════════════════
+function spawnParticles(x, y, emoji, color) {
+  for (let i=0; i<6; i++) {
+    const el = document.createElement('div');
+    el.className = 'particle';
+    el.textContent = i < 3 ? emoji : '✨';
+    const angle = (Math.PI*2*i/6) + Math.random()*.5;
+    const dist = 40 + Math.random()*40;
+    el.style.setProperty('--tx', Math.cos(angle)*dist+'px');
+    el.style.setProperty('--ty', Math.sin(angle)*dist+'px');
+    el.style.left = x+'px'; el.style.top = y+'px';
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════════
+//  RESIZE
+// ══════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  const bgCanvas = document.getElementById('homeBgCanvas');
+  bgCanvas.width = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+});
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('playerName');
+  if (saved) document.getElementById('playerName').value = saved;
+  document.getElementById('playerName').addEventListener('change', e => {
+    localStorage.setItem('playerName', e.target.value);
+  });
+  resizeCanvas();
+  tryAutoFB();
+});
+</script>
+</body>
+</html>
