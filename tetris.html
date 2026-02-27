@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎮 TETRIS — 상재 에디션</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050a14;--panel:#0a1628;--border:#1a3a6b;
+  --c1:#00f5ff;--c2:#ff006e;--c3:#ffbe0b;--c4:#8338ec;--c5:#06d6a0;
+  --c6:#fb5607;--c7:#ff006e;
+  --glow1:0 0 10px #00f5ff,0 0 30px #00f5ff44;
+  --glow2:0 0 10px #ff006e,0 0 30px #ff006e44;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Orbitron',monospace;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;position:relative;
+  user-select:none;-webkit-user-select:none}
+body::before{content:'';position:fixed;inset:0;
+  background:linear-gradient(rgba(0,245,255,.03)1px,transparent 1px),
+             linear-gradient(90deg,rgba(0,245,255,.03)1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(5,10,20,.95)100%);
+  pointer-events:none;z-index:0}
+
+/* ── Firebase Setup Modal ── */
+#fbModal{position:fixed;inset:0;z-index:999;background:rgba(5,10,20,.92);
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#fbModal.on{display:flex}
+.fb-modal-card{background:#0a1628;border:1.5px solid var(--c1);border-radius:16px;
+  padding:28px;max-width:400px;width:90%;display:flex;flex-direction:column;gap:12px}
+.fb-modal-title{font-size:.9rem;color:var(--c1);letter-spacing:.2em;text-align:center;
+  text-shadow:var(--glow1)}
+.fb-modal-sub{font-size:.65rem;color:#4a6a90;text-align:center;line-height:1.7;letter-spacing:.05em}
+.fb-textarea{width:100%;background:#050a14;border:1px solid var(--border);border-radius:8px;
+  color:var(--c1);padding:10px;font-size:.68rem;font-family:monospace;resize:vertical;
+  min-height:110px;outline:none;line-height:1.6}
+.fb-textarea:focus{border-color:var(--c1)}
+.fb-err{font-size:.65rem;color:var(--c2);text-align:center;min-height:14px}
+.fb-skip{background:transparent;border:1px solid var(--border);color:#4a6a90;
+  font-size:.65rem;border-radius:6px;padding:6px;cursor:pointer;font-family:'Orbitron',monospace;
+  letter-spacing:.05em}
+.fb-skip:hover{border-color:#6a8ab0;color:#6a8ab0}
+/* Firebase status badge on title */
+.fb-status{font-size:.55rem;letter-spacing:.15em;margin-top:-.5rem;margin-bottom:.5rem;
+  display:flex;align-items:center;gap:6px;justify-content:center}
+.fb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.fb-dot.on{background:var(--c5);box-shadow:0 0 6px var(--c5);animation:blink 1.5s infinite}
+.fb-dot.off{background:#2a4a70}
+
+/* ══ SCREEN SYSTEM ══ */
+.screen{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.screen.active{display:flex}
+
+/* ── Title ── */
+#titleScreen .logo{font-size:clamp(2.5rem,10vw,5rem);font-weight:900;
+  color:var(--c1);text-shadow:var(--glow1);letter-spacing:.2em;margin-bottom:.1em;
+  animation:logoPulse 2s ease-in-out infinite}
+@keyframes logoPulse{0%,100%{text-shadow:var(--glow1)}50%{text-shadow:0 0 20px var(--c1),0 0 60px var(--c1)}}
+#titleScreen .sub{font-size:.85rem;color:#6a8ab0;letter-spacing:.4em;margin-bottom:2rem}
+.neon-input{background:rgba(0,245,255,.06);border:2px solid var(--c1);border-radius:8px;
+  color:var(--c1);font-family:'Orbitron',monospace;font-size:1rem;
+  padding:12px 20px;width:280px;text-align:center;outline:none;
+  box-shadow:var(--glow1);margin-bottom:1.5rem;letter-spacing:.1em}
+.neon-input::placeholder{color:#1a5a6b}
+.neon-input:focus{box-shadow:0 0 15px var(--c1),0 0 40px #00f5ff44}
+
+/* Mode buttons row */
+.mode-row{display:flex;gap:12px;margin-bottom:.8rem}
+
+.btn{font-family:'Orbitron',monospace;font-weight:700;font-size:.9rem;
+  letter-spacing:.15em;color:var(--bg);background:var(--c1);
+  border:none;border-radius:6px;padding:14px 40px;cursor:pointer;
+  transition:transform .12s,box-shadow .12s;position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.3),transparent);pointer-events:none}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px #00f5ff88}
+.btn:active{transform:translateY(1px)}
+.btn.red{background:var(--c2);color:white}
+.btn.red:hover{box-shadow:0 8px 30px #ff006e88}
+.btn.purple{background:var(--c4);color:white}
+.btn.purple:hover{box-shadow:0 8px 30px #8338ec88}
+.btn.sm{padding:10px 22px;font-size:.78rem}
+
+/* ── Battle Lobby ── */
+#battleLobby{gap:16px}
+#battleLobby h2{font-size:1.4rem;color:var(--c4);text-shadow:0 0 20px var(--c4);
+  letter-spacing:.2em}
+.lobby-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:24px;width:320px;display:flex;flex-direction:column;gap:12px;text-align:center}
+.lobby-label{font-size:.6rem;color:#4a6a90;letter-spacing:.3em;margin-bottom:4px}
+.room-code-display{font-size:2.5rem;font-weight:900;color:var(--c3);
+  letter-spacing:.4em;text-shadow:0 0 20px var(--c3)}
+.room-status{font-size:.65rem;color:var(--muted);letter-spacing:.2em}
+#battleStatus{font-size:.7rem;color:var(--c5);letter-spacing:.15em;min-height:18px;text-align:center}
+
+/* ── Game Screen ── */
+#gameScreen{flex-direction:row;gap:12px;padding:8px;align-items:flex-start;
+  background:var(--bg);z-index:10;position:fixed;inset:0;
+  display:none;justify-content:center}
+#gameScreen.active{display:flex}
+.side-panel{width:130px;flex-shrink:0;display:flex;flex-direction:column;
+  gap:10px;padding-top:48px}
+.panel-box{background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  padding:10px;position:relative}
+.panel-box::before{content:'';position:absolute;inset:0;border-radius:8px;
+  background:linear-gradient(135deg,rgba(0,245,255,.03),transparent);pointer-events:none}
+.panel-label{font-size:.5rem;color:#4a6a90;letter-spacing:.3em;margin-bottom:6px;text-transform:uppercase}
+.panel-value{font-size:1.1rem;font-weight:700;color:var(--c1);text-shadow:var(--glow1)}
+.board-wrapper{position:relative}
+#gameTitle{font-size:.8rem;letter-spacing:.5em;color:var(--c1);
+  text-shadow:var(--glow1);margin-bottom:6px;text-align:center}
+.board-frame{border:2px solid var(--c1);border-radius:4px;
+  box-shadow:var(--glow1),inset 0 0 20px rgba(0,245,255,.05);
+  position:relative;overflow:hidden}
+canvas#board{display:block}
+canvas#particles{position:absolute;inset:0;pointer-events:none}
+.board-overlay{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:rgba(5,10,20,.9);z-index:20}
+.board-overlay.active{display:flex}
+.overlay-title{font-size:1.4rem;font-weight:900;color:var(--c1);
+  text-shadow:var(--glow1);letter-spacing:.2em;margin-bottom:.5rem}
+.overlay-sub{font-size:.65rem;color:#6a8ab0;letter-spacing:.3em}
+canvas.preview{display:block}
+#rightPanel{padding-top:48px}
+
+/* Leaderboard */
+#leaderboard{background:var(--panel);border:1px solid var(--border);
+  border-radius:8px;padding:12px;width:130px}
+.lb-title{font-size:.5rem;color:#4a6a90;letter-spacing:.3em;margin-bottom:8px}
+.lb-mine{background:rgba(0,245,255,0.07);border-radius:4px;outline:1px solid rgba(0,245,255,0.2)}
+.lb-live-dot{display:inline-block;width:6px;height:6px;background:#06d6a0;
+  border-radius:50%;margin-left:4px;animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.lb-row{display:flex;align-items:center;gap:6px;padding:4px 0;
+  border-bottom:1px solid rgba(26,58,107,.5)}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-size:.5rem;color:#4a6a90;width:12px;flex-shrink:0}
+.lb-name{font-size:.55rem;color:var(--c3);flex:1;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.lb-score{font-size:.55rem;color:var(--c1);flex-shrink:0}
+.lb-rank.gold{color:var(--c3);text-shadow:0 0 6px var(--c3)}
+.lb-rank.silver{color:#c0c0c0}
+.lb-rank.bronze{color:#cd7f32}
+.controls{font-size:.45rem;color:#2a4a70;letter-spacing:.1em;line-height:1.8;margin-top:8px}
+
+/* BGM toggle */
+#bgmBtn{position:fixed;top:12px;right:12px;z-index:200;
+  background:rgba(0,245,255,.1);border:1px solid var(--c1);
+  color:var(--c1);font-size:.7rem;border-radius:6px;padding:6px 10px;
+  cursor:pointer;letter-spacing:.05em;font-family:'Orbitron',monospace}
+#bgmBtn:hover{background:rgba(0,245,255,.2)}
+
+/* Battle opponent panel */
+#opponentPanel{display:none;flex-direction:column;gap:6px;align-items:center;
+  padding-top:48px;width:110px;flex-shrink:0}
+#opponentPanel.on{display:flex}
+.opp-label{font-size:.5rem;color:var(--c2);letter-spacing:.2em}
+.opp-name{font-size:.6rem;color:var(--c3);font-weight:700;
+  text-align:center;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#opponentCanvas{border:1.5px solid var(--c2);border-radius:3px;
+  box-shadow:0 0 8px #ff006e44}
+.garbage-meter{width:100%;background:var(--panel);border:1px solid var(--border);
+  border-radius:4px;padding:6px;text-align:center}
+.garbage-label{font-size:.45rem;color:#4a6a90;letter-spacing:.2em;margin-bottom:4px}
+.garbage-blocks{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:12px}
+.garbage-block{width:8px;height:8px;background:var(--c2);border-radius:1px;
+  box-shadow:0 0 4px var(--c2)}
+.battle-score-panel{background:var(--panel);border:1px solid var(--border);
+  border-radius:8px;padding:8px;width:100%;text-align:center}
+.battle-score-val{font-size:.9rem;font-weight:700;color:var(--c1)}
+
+/* ── Flash/FX overlays ── */
+.flash-overlay{position:absolute;inset:0;background:white;opacity:0;
+  pointer-events:none;z-index:15;transition:none}
+.flash-overlay.flash{animation:flashAnim .4s ease-out forwards}
+@keyframes flashAnim{0%{opacity:.9}15%{opacity:.6}100%{opacity:0}}
+.flash-overlay.tspin-flash{animation:tspinFlash .5s ease-out forwards}
+@keyframes tspinFlash{0%{background:var(--c4);opacity:.7}100%{opacity:0}}
+.flash-overlay.perfect-flash{animation:perfectFlash .8s ease-out forwards}
+@keyframes perfectFlash{0%{background:var(--c3);opacity:1}50%{opacity:.6}100%{opacity:0}}
+
+.combo-text{position:absolute;left:50%;transform:translateX(-50%);
+  font-size:1.5rem;font-weight:900;pointer-events:none;z-index:16;
+  text-shadow:0 0 20px currentColor;animation:comboAnim .8s ease-out forwards}
+@keyframes comboAnim{
+  0%{opacity:1;transform:translateX(-50%) scale(0.5) translateY(0)}
+  40%{opacity:1;transform:translateX(-50%) scale(1.3) translateY(-20px)}
+  100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-50px)}}
+
+/* Special announcement banner */
+.announce-banner{position:absolute;left:0;right:0;display:flex;
+  align-items:center;justify-content:center;z-index:17;
+  pointer-events:none;animation:bannerAnim 1.2s ease-out forwards}
+@keyframes bannerAnim{
+  0%{opacity:0;transform:scaleX(0)}
+  15%{opacity:1;transform:scaleX(1)}
+  70%{opacity:1}
+  100%{opacity:0;transform:scaleY(0)}}
+.banner-inner{padding:8px 20px;font-size:1rem;font-weight:900;
+  letter-spacing:.15em;white-space:nowrap}
+.banner-tspin{background:var(--c4);color:white;
+  box-shadow:0 0 30px var(--c4),0 0 60px var(--c4)44}
+.banner-perfect{background:var(--c3);color:#050a14;
+  box-shadow:0 0 40px var(--c3),0 0 80px var(--c3)88}
+.banner-battle{background:var(--c2);color:white;
+  box-shadow:0 0 30px var(--c2)}
+
+/* ── Game Over ── */
+#gameOverScreen{z-index:200}
+#gameOverScreen .go-score{font-size:2rem;font-weight:900;color:var(--c3);
+  text-shadow:0 0 20px var(--c3);margin:1rem 0}
+#gameOverScreen .go-lines{font-size:.75rem;color:#6a8ab0;margin-bottom:2rem}
+#gameOverScreen h2{font-size:1.5rem;font-weight:900;color:var(--c2);
+  text-shadow:var(--glow2);letter-spacing:.2em;margin-bottom:.5rem}
+.go-extra{font-size:.7rem;color:var(--c5);letter-spacing:.15em;margin-bottom:1rem;min-height:20px}
+
+/* ── Touch controls ── */
+#touchControls{display:none;position:fixed;bottom:0;left:0;right:0;
+  background:rgba(5,10,20,.95);border-top:1px solid var(--border);
+  padding:8px;z-index:50;gap:8px;flex-direction:column}
+.touch-row{display:flex;justify-content:center;gap:8px}
+.touch-btn{font-family:'Orbitron',monospace;font-size:1.1rem;
+  background:rgba(0,245,255,.1);border:1px solid var(--c1);
+  color:var(--c1);border-radius:8px;width:52px;height:42px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.touch-btn:active{background:rgba(0,245,255,.3)}
+.touch-btn.wide{width:80px}
+.touch-btn.red-btn{border-color:var(--c2);color:var(--c2);background:rgba(255,0,110,.1)}
+
+@media(max-width:580px),(max-height:700px){
+  #touchControls{display:flex}
+  .controls{display:none}
+  #gameScreen{align-items:flex-start;padding-top:4px;gap:6px}
+  .side-panel,#rightPanel{width:90px}
+  #leaderboard{width:90px}
+  #opponentPanel{width:90px}
+}
+</style>
+</head>
+<body>
+
+<!-- BGM toggle (always visible during game) -->
+<button id="bgmBtn" onclick="toggleBGM()" style="display:none">🔊 BGM</button>
+
+<!-- ══ FIREBASE SETUP MODAL ══ -->
+<div id="fbModal">
+  <div class="fb-modal-card">
+    <div class="fb-modal-title">🔥 FIREBASE 연결</div>
+    <div class="fb-modal-sub">
+      리더보드와 2P 대전을 사용하려면 Firebase 설정이 필요해요.<br>
+      <b style="color:var(--c3)">Firebase 콘솔 → 프로젝트 설정 → 구성 탭</b>에서<br>
+      { } 전체를 복사해서 붙여넣으세요.
+    </div>
+    <textarea class="fb-textarea" id="fbModalInput" placeholder='{
+  "apiKey": "...",
+  "databaseURL": "https://...",
+  "projectId": "...",
+  ...
+}'></textarea>
+    <button class="btn sm" onclick="connectFBFromModal()">🔥 연결하기</button>
+    <button class="fb-skip" onclick="closeFBModal()">리더보드 없이 플레이</button>
+    <div class="fb-err" id="fbModalErr"></div>
+  </div>
+</div>
+
+<!-- ══ TITLE SCREEN ══ -->
+<div class="screen active" id="titleScreen">
+  <div class="logo">TETRIS</div>
+  <div class="sub">NEON EDITION</div>
+  <div class="fb-status" id="fbStatusBadge">
+    <div class="fb-dot off" id="fbStatusDot"></div>
+    <span id="fbStatusText" style="color:#2a4a70">OFFLINE</span>
+    <span id="fbConnectBtn" onclick="openFBModal()"
+      style="cursor:pointer;color:var(--c1);text-decoration:underline;display:none">연결</span>
+  </div>
+  <input class="neon-input" id="playerName" placeholder="닉네임 입력" maxlength="10" autocomplete="off">
+  <div class="mode-row">
+    <button class="btn" onclick="startGame()">▶ 1P SOLO</button>
+    <button class="btn purple" onclick="goBattleLobby()">⚔ 2P 대전</button>
+  </div>
+  <div id="titleLB" style="margin-top:2rem;text-align:center">
+    <div style="font-size:.5rem;color:#4a6a90;letter-spacing:.3em;margin-bottom:12px">🏆 LEADERBOARD</div>
+    <div id="titleLBRows"></div>
+  </div>
+</div>
+
+<!-- ══ BATTLE LOBBY ══ -->
+<div class="screen" id="battleLobby">
+  <h2>⚔ 2P 대전</h2>
+  <div class="lobby-card">
+    <div>
+      <div class="lobby-label">방 만들기</div>
+      <button class="btn sm" onclick="createBattleRoom()" style="width:100%;margin-top:6px">방 생성</button>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:12px">
+      <div class="lobby-label">친구 방에 입장</div>
+      <input class="neon-input" id="joinCodeInput" placeholder="코드 입력" maxlength="6"
+        style="margin:8px 0;width:100%;font-size:1.4rem;letter-spacing:.3em;padding:10px">
+      <button class="btn sm red" onclick="joinBattleRoom()" style="width:100%">입장</button>
+    </div>
+    <div class="room-code-display" id="roomCodeDisplay" style="display:none"></div>
+    <div id="battleStatus"></div>
+  </div>
+  <button class="btn sm" onclick="show('titleScreen')" style="margin-top:14px;background:#1a3a6b;color:var(--c1)">← 뒤로</button>
+</div>
+
+<!-- ══ GAME SCREEN ══ -->
+<div id="gameScreen" class="active" style="display:none">
+  <!-- LEFT PANEL -->
+  <div class="side-panel">
+    <div class="panel-box">
+      <div class="panel-label">SCORE</div>
+      <div class="panel-value" id="scoreDisplay">0</div>
+    </div>
+    <div class="panel-box">
+      <div class="panel-label">LEVEL</div>
+      <div class="panel-value" id="levelDisplay">1</div>
+    </div>
+    <div class="panel-box">
+      <div class="panel-label">LINES</div>
+      <div class="panel-value" id="linesDisplay">0</div>
+    </div>
+    <div class="panel-box">
+      <div class="panel-label">HOLD</div>
+      <canvas class="preview" id="holdCanvas" width="96" height="64"></canvas>
+    </div>
+    <div class="panel-box">
+      <div class="panel-label">CONTROLS</div>
+      <div class="controls">
+        ← → 이동<br>↑ 회전<br>↓ 소프트드롭<br>SPACE 하드드롭<br>C 홀드<br>P 일시정지
+      </div>
+    </div>
+  </div>
+
+  <!-- BOARD -->
+  <div class="board-wrapper">
+    <div id="gameTitle">TETRIS</div>
+    <div class="board-frame">
+      <canvas id="board"></canvas>
+      <canvas id="particles"></canvas>
+      <div class="flash-overlay" id="flashOverlay"></div>
+      <div class="board-overlay" id="pauseOverlay">
+        <div class="overlay-title">PAUSED</div>
+        <div class="overlay-sub">PRESS P TO RESUME</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="side-panel" id="rightPanel">
+    <div class="panel-box">
+      <div class="panel-label">NEXT</div>
+      <canvas class="preview" id="nextCanvas" width="96" height="64"></canvas>
+    </div>
+    <div id="leaderboard">
+      <div class="lb-title">🏆 RANKINGS<span class="lb-live-dot" id="liveDot" style="display:none"></span></div>
+      <div id="lbRows"></div>
+    </div>
+  </div>
+
+  <!-- OPPONENT PANEL (battle mode only) -->
+  <div id="opponentPanel">
+    <div class="opp-label">OPPONENT</div>
+    <div class="opp-name" id="oppName">???</div>
+    <canvas id="opponentCanvas"></canvas>
+    <div class="garbage-meter">
+      <div class="garbage-label">INCOMING 🗑</div>
+      <div class="garbage-blocks" id="garbageBlocks"></div>
+    </div>
+    <div class="battle-score-panel">
+      <div class="panel-label">OPP SCORE</div>
+      <div class="battle-score-val" id="oppScore">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GAME OVER SCREEN ══ -->
+<div class="screen" id="gameOverScreen">
+  <h2 id="goTitle">GAME OVER</h2>
+  <div class="go-score" id="goScore">0</div>
+  <div class="go-lines" id="goLines">LINES: 0 | LEVEL: 1</div>
+  <div class="go-extra" id="goExtra"></div>
+  <button class="btn" onclick="restartGame()" style="margin-bottom:12px">▶ PLAY AGAIN</button>
+  <button class="btn red" onclick="goToTitle()">⟵ TITLE</button>
+</div>
+
+<!-- TOUCH CONTROLS -->
+<div id="touchControls">
+  <div class="touch-row">
+    <div class="touch-btn" ontouchstart="touchAction('hold')">C</div>
+    <div class="touch-btn wide" ontouchstart="touchAction('up')">↻</div>
+    <div class="touch-btn red-btn" ontouchstart="touchAction('pause')">⏸</div>
+  </div>
+  <div class="touch-row">
+    <div class="touch-btn" ontouchstart="touchStart('left')" ontouchend="touchEnd('left')">◀</div>
+    <div class="touch-btn" ontouchstart="touchAction('down')" ontouchend="touchEnd('down')">▼</div>
+    <div class="touch-btn" ontouchstart="touchStart('right')" ontouchend="touchEnd('right')">▶</div>
+    <div class="touch-btn wide" ontouchstart="touchAction('drop')">⬇</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//   CONSTANTS
+// ══════════════════════════════════════════════
+const COLS = 10, ROWS = 20;
+const isMobile = ('ontouchstart' in window)||(navigator.maxTouchPoints>0);
+
+function calcCellSize() {
+  const mh = isMobile?160:60, mv = isMobile?110:60;
+  const maxW = Math.floor((window.innerWidth-320)/COLS);
+  const maxH = Math.floor((window.innerHeight-mv)/ROWS);
+  return Math.max(20, Math.min(maxW,maxH,34));
+}
+let CS = calcCellSize(), BW = CS*COLS, BH = CS*ROWS;
+
+const COLORS = {
+  I:'#00f5ff',O:'#ffbe0b',T:'#8338ec',
+  S:'#06d6a0',Z:'#ff006e',J:'#fb5607',L:'#3a86ff',
+  G:'#1a2a4a',E:'#050a14'
+};
+const GLOW_COLORS = {I:'#00f5ff',O:'#ffbe0b',T:'#8338ec',S:'#06d6a0',Z:'#ff006e',J:'#fb5607',L:'#3a86ff'};
+
+const PIECES = {
+  I:{color:'I',rotations:[
+    [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+    [[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]],
+    [[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],
+    [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]]},
+  O:{color:'O',rotations:[[[1,1],[1,1]]]},
+  T:{color:'T',rotations:[
+    [[0,1,0],[1,1,1],[0,0,0]],
+    [[0,1,0],[0,1,1],[0,1,0]],
+    [[0,0,0],[1,1,1],[0,1,0]],
+    [[0,1,0],[1,1,0],[0,1,0]]]},
+  S:{color:'S',rotations:[
+    [[0,1,1],[1,1,0],[0,0,0]],
+    [[0,1,0],[0,1,1],[0,0,1]],
+    [[0,0,0],[0,1,1],[1,1,0]],
+    [[1,0,0],[1,1,0],[0,1,0]]]},
+  Z:{color:'Z',rotations:[
+    [[1,1,0],[0,1,1],[0,0,0]],
+    [[0,0,1],[0,1,1],[0,1,0]],
+    [[0,0,0],[1,1,0],[0,1,1]],
+    [[0,1,0],[1,1,0],[1,0,0]]]},
+  J:{color:'J',rotations:[
+    [[1,0,0],[1,1,1],[0,0,0]],
+    [[0,1,1],[0,1,0],[0,1,0]],
+    [[0,0,0],[1,1,1],[0,0,1]],
+    [[0,1,0],[0,1,0],[1,1,0]]]},
+  L:{color:'L',rotations:[
+    [[0,0,1],[1,1,1],[0,0,0]],
+    [[0,1,0],[0,1,0],[0,1,1]],
+    [[0,0,0],[1,1,1],[1,0,0]],
+    [[1,1,0],[0,1,0],[0,1,0]]]}
+};
+const PIECE_KEYS = Object.keys(PIECES);
+
+const WALL_KICKS = {
+  normal:[
+    [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+    [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]]],
+  I:[
+    [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+    [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+    [[0,0],[1,0],[-2,0],[1,-2],[-2,1]]]
+};
+
+const LINE_SCORES = [0,100,300,500,800];
+// T-spin scores (single/double/triple)
+const TSPIN_SCORES = {single:800, double:1200, triple:1600, mini:200};
+const PERFECT_CLEAR_BONUS = 3500;
+const LEVEL_SPEEDS = [800,700,600,500,400,300,250,200,150,120,100,80,70,60,50];
+
+// Garbage lines per clear type
+const GARBAGE_TABLE = {normal:[0,0,1,2,4], tspin:[0,2,4,6,0], perfect:10};
+
+// ══════════════════════════════════════════════
+//   WEB AUDIO — BGM + SFX
+// ══════════════════════════════════════════════
+let audioCtx = null;
+let bgmPlaying = false;
+let bgmNodes = [];
+let bgmScheduled = false;
+let bgmStartTime = 0;
+let bgmBeatIdx = 0;
+let sfxEnabled = true;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// Note frequencies
+const NOTE_FREQ = {
+  'C3':130.81,'D3':146.83,'E3':164.81,'F3':174.61,'G3':196,'A3':220,'B3':246.94,
+  'C4':261.63,'D4':293.66,'E4':329.63,'F4':349.23,'G4':392,'A4':440,'B4':493.88,
+  'C5':523.25,'D5':587.33,'E5':659.25,'F5':698.46,'G5':783.99,'A5':880,'B5':987.77,
+};
+
+// Korobeiniki (Tetris A theme) — melody [note, beats]
+const BGM_MELODY = [
+  ['E5',1],['B4',.5],['C5',.5],['D5',1],['C5',.5],['B4',.5],
+  ['A4',1],['A4',.5],['C5',.5],['E5',1],['D5',.5],['C5',.5],
+  ['B4',1.5],['C5',.5],['D5',1],['E5',1],
+  ['C5',1],['A4',1],['A4',2],
+  [null,.5],['D5',1.5],['F5',.5],['A5',1],['G5',.5],['F5',.5],
+  ['E5',1.5],['C5',.5],['E5',1],['D5',.5],['C5',.5],
+  ['B4',1],['B4',.5],['C5',.5],['D5',1],['E5',1],
+  ['C5',1],['A4',1],['A4',2],
+  // Bridge
+  [null,.5],['E4',1],['C4',1],['D4',1],['B3',1],
+  ['C4',1],['A3',1],['G3',1.5],[null,.5],
+  ['E4',1],['C4',1],['D4',1],['B3',1],
+  ['C5',.5],['E5',.5],['A5',1],['G5',.5],['F5',.5],
+  ['E5',1.5],['C5',.5],['E5',1],['D5',.5],['C5',.5],
+  ['B4',1],['B4',.5],['C5',.5],['D5',1],['E5',1],
+  ['C5',1],['A4',1],['A4',2],
+];
+
+function scheduleBGM() {
+  if (!bgmPlaying) return;
+  const ctx = getAudioCtx();
+  const BPM = 180, beatDur = 60/BPM;
+  let t = bgmStartTime;
+
+  for (let i = bgmBeatIdx; i < BGM_MELODY.length; i++) {
+    const [note, beats] = BGM_MELODY[i];
+    const dur = beats * beatDur;
+    if (note && NOTE_FREQ[note]) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = NOTE_FREQ[note];
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.06, t + 0.01);
+      gain.gain.setValueAtTime(0.06, t + dur * 0.75);
+      gain.gain.linearRampToValueAtTime(0, t + dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t); osc.stop(t + dur);
+      bgmNodes.push(osc);
+    }
+    t += dur;
+    if (t > ctx.currentTime + 8) {
+      bgmBeatIdx = i + 1;
+      bgmStartTime = t;
+      break;
+    }
+    if (i === BGM_MELODY.length - 1) {
+      bgmBeatIdx = 0;
+      bgmStartTime = t;
+      break;
+    }
+  }
+  if (bgmPlaying) {
+    bgmScheduled = setTimeout(scheduleBGM, 4000);
+  }
+}
+
+function startBGM() {
+  if (bgmPlaying) return;
+  bgmPlaying = true;
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+  bgmStartTime = ctx.currentTime + 0.1;
+  bgmBeatIdx = 0;
+  document.getElementById('bgmBtn').textContent = '🔊 BGM';
+  scheduleBGM();
+}
+
+function stopBGM() {
+  bgmPlaying = false;
+  clearTimeout(bgmScheduled);
+  bgmNodes.forEach(n => { try { n.stop(); } catch(e){} });
+  bgmNodes = [];
+  document.getElementById('bgmBtn').textContent = '🔇 BGM';
+}
+
+function toggleBGM() {
+  if (bgmPlaying) stopBGM(); else startBGM();
+}
+
+// SFX
+function sfx(type) {
+  if (!sfxEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const g = ctx.createGain();
+    g.connect(ctx.destination);
+
+    switch(type) {
+      case 'move': {
+        const o = ctx.createOscillator();
+        o.type='square'; o.frequency.value=220;
+        g.gain.setValueAtTime(0.04,now); g.gain.linearRampToValueAtTime(0,now+0.05);
+        o.connect(g); o.start(now); o.stop(now+0.05); break;
+      }
+      case 'rotate': {
+        const o = ctx.createOscillator();
+        o.type='square'; o.frequency.setValueAtTime(330,now); o.frequency.linearRampToValueAtTime(440,now+0.07);
+        g.gain.setValueAtTime(0.04,now); g.gain.linearRampToValueAtTime(0,now+0.07);
+        o.connect(g); o.start(now); o.stop(now+0.07); break;
+      }
+      case 'lock': {
+        const o = ctx.createOscillator();
+        o.type='sawtooth'; o.frequency.setValueAtTime(180,now); o.frequency.linearRampToValueAtTime(80,now+0.1);
+        g.gain.setValueAtTime(0.08,now); g.gain.linearRampToValueAtTime(0,now+0.1);
+        o.connect(g); o.start(now); o.stop(now+0.1); break;
+      }
+      case 'clear1':
+      case 'clear2': {
+        [330,440,550].forEach((f,i) => {
+          const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+          o2.type='square'; o2.frequency.value=f;
+          const t=now+i*0.06;
+          g2.gain.setValueAtTime(0.07,t); g2.gain.linearRampToValueAtTime(0,t+0.1);
+          o2.connect(g2); g2.connect(ctx.destination); o2.start(t); o2.stop(t+0.1);
+        }); break;
+      }
+      case 'clear3': {
+        [440,550,660,880].forEach((f,i) => {
+          const o2=ctx.createOscillator(),g2=ctx.createGain();
+          o2.type='square'; o2.frequency.value=f;
+          const t=now+i*0.05;
+          g2.gain.setValueAtTime(0.08,t); g2.gain.linearRampToValueAtTime(0,t+0.12);
+          o2.connect(g2); g2.connect(ctx.destination); o2.start(t); o2.stop(t+0.12);
+        }); break;
+      }
+      case 'tetris': {
+        [523,659,784,1047,784,1047].forEach((f,i) => {
+          const o2=ctx.createOscillator(),g2=ctx.createGain();
+          o2.type='square'; o2.frequency.value=f;
+          const t=now+i*0.07;
+          g2.gain.setValueAtTime(0.09,t); g2.gain.linearRampToValueAtTime(0,t+0.12);
+          o2.connect(g2); g2.connect(ctx.destination); o2.start(t); o2.stop(t+0.15);
+        }); break;
+      }
+      case 'tspin': {
+        [261,329,415,523,659].forEach((f,i) => {
+          const o2=ctx.createOscillator(),g2=ctx.createGain();
+          o2.type='sawtooth'; o2.frequency.value=f;
+          const t=now+i*0.055;
+          g2.gain.setValueAtTime(0.1,t); g2.gain.linearRampToValueAtTime(0,t+0.15);
+          o2.connect(g2); g2.connect(ctx.destination); o2.start(t); o2.stop(t+0.18);
+        }); break;
+      }
+      case 'perfect': {
+        [262,330,392,523,659,784,1047,1319].forEach((f,i) => {
+          const o2=ctx.createOscillator(),g2=ctx.createGain();
+          o2.type='square'; o2.frequency.value=f;
+          const t=now+i*0.06;
+          g2.gain.setValueAtTime(0.1,t); g2.gain.linearRampToValueAtTime(0,t+0.18);
+          o2.connect(g2); g2.connect(ctx.destination); o2.start(t); o2.stop(t+0.2);
+        }); break;
+      }
+      case 'levelup': {
+        [392,494,587,784].forEach((f,i) => {
+          const o2=ctx.createOscillator(),g2=ctx.createGain();
+          o2.type='square'; o2.frequency.value=f;
+          const t=now+i*0.08;
+          g2.gain.setValueAtTime(0.08,t); g2.gain.linearRampToValueAtTime(0,t+0.12);
+          o2.connect(g2); g2.connect(ctx.destination); o2.start(t); o2.stop(t+0.15);
+        }); break;
+      }
+      case 'gameover': {
+        [523,415,330,261,196,130].forEach((f,i) => {
+          const o2=ctx.createOscillator(),g2=ctx.createGain();
+          o2.type='sawtooth'; o2.frequency.value=f;
+          const t=now+i*0.12;
+          g2.gain.setValueAtTime(0.1,t); g2.gain.linearRampToValueAtTime(0,t+0.18);
+          o2.connect(g2); g2.connect(ctx.destination); o2.start(t); o2.stop(t+0.2);
+        }); break;
+      }
+      case 'garbage': {
+        const o=ctx.createOscillator(),g2=ctx.createGain();
+        o.type='sawtooth'; o.frequency.setValueAtTime(120,now); o.frequency.linearRampToValueAtTime(60,now+0.2);
+        g2.gain.setValueAtTime(0.12,now); g2.gain.linearRampToValueAtTime(0,now+0.2);
+        o.connect(g2); g2.connect(ctx.destination); o.start(now); o.stop(now+0.2); break;
+      }
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+//   GAME STATE
+// ══════════════════════════════════════════════
+let board=[], current=null, hold=null, next=[], bag=[];
+let score=0, level=1, lines=0;
+let gameRunning=false, paused=false, holdUsed=false;
+let playerName='PLAYER', dropTimer=null, combo=0;
+let particles_list=[];
+// T-spin tracking
+let lastRotated=false, lastKickUsed=false;
+// Battle state
+let battleMode=false, battleRole=null; // 'p1' or 'p2'
+let battleRoomCode=null, battleRoomRef=null;
+let pendingGarbage=0;
+let prevLevel=1;
+
+// ── Canvas setup ──
+const boardCanvas=document.getElementById('board');
+const partCanvas=document.getElementById('particles');
+const boardCtx=boardCanvas.getContext('2d');
+const partCtx=partCanvas.getContext('2d');
+const holdCanvas=document.getElementById('holdCanvas');
+const holdCtx=holdCanvas.getContext('2d');
+const nextCanvas=document.getElementById('nextCanvas');
+const nextCtx=nextCanvas.getContext('2d');
+const oppCanvas=document.getElementById('opponentCanvas');
+const oppCtx=oppCanvas.getContext('2d');
+
+function resizeCanvases() {
+  CS=calcCellSize(); BW=CS*COLS; BH=CS*ROWS;
+  boardCanvas.width=BW; boardCanvas.height=BH;
+  partCanvas.width=BW; partCanvas.height=BH;
+  // Opponent canvas (smaller)
+  oppCanvas.width=Math.floor(BW*0.45);
+  oppCanvas.height=Math.floor(BH*0.45);
+}
+
+function initBoard() {
+  board=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+}
+
+function refillBag() { bag=[...PIECE_KEYS].sort(()=>Math.random()-.5); }
+function nextFromBag() { if(!bag.length)refillBag(); return bag.pop(); }
+
+function newPiece(type) {
+  const p=PIECES[type];
+  return {type,color:p.color,matrix:p.rotations[0],rotIdx:0,
+    x:Math.floor((COLS-p.rotations[0][0].length)/2),y:-1};
+}
+
+function collides(piece,ox=0,oy=0,matrix=null) {
+  const m=matrix||piece.matrix;
+  for(let r=0;r<m.length;r++) for(let c=0;c<m[r].length;c++) {
+    if(!m[r][c]) continue;
+    const nx=piece.x+c+ox, ny=piece.y+r+oy;
+    if(nx<0||nx>=COLS||ny>=ROWS) return true;
+    if(ny>=0&&board[ny][nx]) return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════
+//   T-SPIN DETECTION
+// ══════════════════════════════════════════════
+function detectTSpin() {
+  if (!current || current.type !== 'T') return null;
+  if (!lastRotated) return null;
+
+  // T-piece center
+  const cx = current.x + 1;
+  const cy = current.y + 1;
+
+  // 4 corners of T center
+  const corners = [
+    [cx-1, cy-1], [cx+1, cy-1],
+    [cx-1, cy+1], [cx+1, cy+1]
+  ];
+
+  function isOccupied(x, y) {
+    if (x < 0 || x >= COLS || y >= ROWS) return true; // wall
+    if (y < 0) return true; // ceiling
+    return board[y][x] !== null;
+  }
+
+  const filled = corners.filter(([x,y]) => isOccupied(x,y)).length;
+
+  if (filled >= 3) {
+    // Full T-spin
+    return 'tspin';
+  } else if (filled >= 2 && lastKickUsed) {
+    // Mini T-spin (used wall kick)
+    return 'mini';
+  }
+  return null;
+}
+
+// ── Rotation with SRS wall kicks ──
+function rotate(dir=1) {
+  const p=current;
+  const rotations=PIECES[p.type].rotations;
+  const newIdx=(p.rotIdx+dir+rotations.length)%rotations.length;
+  const newMatrix=rotations[newIdx];
+  const kicks=p.type==='I'?WALL_KICKS.I:WALL_KICKS.normal;
+  const kickSet=kicks[p.rotIdx];
+  for(let ki=0;ki<kickSet.length;ki++) {
+    const [kx,ky]=kickSet[ki];
+    if(!collides(p,kx,-ky,newMatrix)) {
+      p.matrix=newMatrix; p.rotIdx=newIdx;
+      p.x+=kx; p.y-=ky;
+      lastRotated=true;
+      lastKickUsed=(ki>0); // kick index >0 means a kick was used
+      sfx('rotate');
+      return true;
+    }
+  }
+  return false;
+}
+
+function ghostY() {
+  let gy=0;
+  while(!collides(current,0,gy+1)) gy++;
+  return current.y+gy;
+}
+
+// ── Lock piece ──
+function lockPiece() {
+  const p=current;
+  const tspinType=detectTSpin(); // check before placing
+  for(let r=0;r<p.matrix.length;r++) for(let c=0;c<p.matrix[r].length;c++) {
+    if(!p.matrix[r][c]) continue;
+    const ny=p.y+r;
+    if(ny<0){endGame();return;}
+    board[ny][p.x+c]=p.color;
+  }
+  holdUsed=false;
+  sfx('lock');
+  clearLines(tspinType);
+}
+
+// ══════════════════════════════════════════════
+//   CLEAR LINES (T-spin + Perfect Clear)
+// ══════════════════════════════════════════════
+function clearLines(tspinType=null) {
+  const cleared=[];
+  for(let r=0;r<ROWS;r++) {
+    if(board[r].every(c=>c!==null)) cleared.push(r);
+  }
+
+  if(cleared.length===0) {
+    // T-spin with no lines cleared (T-spin zero) — still give some points
+    if(tspinType==='tspin') {
+      score+=400*level;
+      showAnnounce('T-SPIN!','banner-tspin');
+      sfx('tspin');
+    }
+    combo=0;
+    lastRotated=false;
+    spawnNext();
+    return;
+  }
+
+  combo++;
+  const count=cleared.length;
+
+  // ── Determine score type ──
+  let pts=0, isTspin=false, announceTxt='', sfxType='';
+  if(tspinType==='tspin') {
+    isTspin=true;
+    const tspinNames=['','T-SPIN SINGLE!','T-SPIN DOUBLE!','T-SPIN TRIPLE!'];
+    announceTxt=tspinNames[count]||'T-SPIN!';
+    pts=(TSPIN_SCORES[['','single','double','triple'][count]]||TSPIN_SCORES.single)*level;
+    sfxType='tspin';
+  } else if(tspinType==='mini') {
+    pts=TSPIN_SCORES.mini*level*count;
+    announceTxt='MINI T-SPIN!';
+    sfxType='tspin';
+  } else {
+    const sfxNames=['','clear1','clear2','clear3','tetris'];
+    sfxType=sfxNames[count]||'tetris';
+    const labels=['','SINGLE','DOUBLE!','TRIPLE!!','TETRIS!!'];
+    announceTxt=count>=2?labels[count]:'';
+    pts=LINE_SCORES[count]*level;
+  }
+
+  const comboBonus=combo>1?Math.floor(pts*0.3*(combo-1)):0;
+
+  // FX
+  triggerLineClearFX(cleared, count, isTspin);
+  if(announceTxt) showAnnounce(announceTxt, isTspin?'banner-tspin':'');
+  if(combo>1) setTimeout(()=>showComboText(`${combo}x COMBO!`,'#ffbe0b',cleared[0]*CS+40),200);
+
+  setTimeout(()=>{
+    // Remove cleared lines (REVERSE ORDER — bug fix)
+    for(const r of [...cleared].reverse()) {
+      board.splice(r,1);
+      board.unshift(Array(COLS).fill(null));
+    }
+
+    // ── Perfect Clear check ──
+    const isPerfect=board.every(row=>row.every(c=>c===null));
+    if(isPerfect) {
+      pts+=PERFECT_CLEAR_BONUS*level;
+      showAnnounce('✨ PERFECT CLEAR! ✨','banner-perfect');
+      sfx('perfect');
+      triggerPerfectClearFX();
+    } else {
+      sfx(sfxType);
+    }
+
+    score+=pts+comboBonus;
+    lines+=count;
+    const newLevel=Math.floor(lines/10)+1;
+    if(newLevel>level) { level=newLevel; sfx('levelup'); }
+    updateHUD();
+    lastRotated=false;
+
+    // Battle: send garbage to opponent
+    if(battleMode&&battleRoomRef) {
+      const garbageCount=computeGarbage(count,isTspin,isPerfect);
+      if(garbageCount>0) sendGarbage(garbageCount);
+      // Sync board state
+      syncBattleBoard();
+    }
+
+    // Apply pending garbage (before spawning next piece)
+    if(pendingGarbage>0&&!isPerfect) {
+      applyGarbage(pendingGarbage);
+      pendingGarbage=0;
+      updateGarbageUI();
+    }
+
+    spawnNext();
+  },300);
+}
+
+function computeGarbage(cleared, isTspin, isPerfect) {
+  if(isPerfect) return GARBAGE_TABLE.perfect;
+  if(isTspin) return GARBAGE_TABLE.tspin[cleared]||0;
+  return GARBAGE_TABLE.normal[cleared]||0;
+}
+
+function applyGarbage(count) {
+  sfx('garbage');
+  for(let i=0;i<count;i++) {
+    board.shift();
+    const hole=Math.floor(Math.random()*COLS);
+    const garbageLine=Array(COLS).fill('G');
+    garbageLine[hole]=null;
+    board.push(garbageLine);
+  }
+}
+
+// ── Spawn next piece ──
+function spawnNext() {
+  while(next.length<3) next.push(nextFromBag());
+  current=newPiece(next.shift());
+  next.push(nextFromBag());
+  lastRotated=false;
+  if(collides(current)){endGame();return;}
+  scheduleDrop();
+  render();
+}
+
+// ── Hold ──
+function doHold() {
+  if(holdUsed)return;
+  holdUsed=true;
+  if(hold===null){hold=current.type;spawnNext();}
+  else{const tmp=hold;hold=current.type;current=newPiece(tmp);scheduleDrop();render();}
+}
+
+// ── Drop timer ──
+function getSpeed(){return LEVEL_SPEEDS[Math.min(level-1,LEVEL_SPEEDS.length-1)];}
+function scheduleDrop(){clearTimeout(dropTimer);if(!gameRunning||paused)return;dropTimer=setTimeout(softDrop_auto,getSpeed());}
+function softDrop_auto(){
+  if(!gameRunning||paused)return;
+  if(collides(current,0,1)){lockPiece();}else{current.y++;render();scheduleDrop();}
+}
+function hardDrop(){
+  const gy=ghostY();
+  score+=(gy-current.y)*2;
+  current.y=gy;lockPiece();render();
+}
+function softDrop(){
+  if(collides(current,0,1)){lockPiece();}
+  else{current.y++;score++;render();scheduleDrop();}
+}
+
+// ── End game ──
+function endGame() {
+  gameRunning=false;
+  clearTimeout(dropTimer);
+  sfx('gameover');
+  stopBGM();
+  saveScore();
+  document.getElementById('bgmBtn').style.display='none';
+  document.getElementById('goScore').textContent=score.toLocaleString();
+  document.getElementById('goLines').textContent=`LINES: ${lines} | LEVEL: ${level}`;
+
+  if(battleMode) {
+    endBattle('lose');
+    return;
+  }
+
+  document.getElementById('goTitle').textContent='GAME OVER';
+  document.getElementById('goExtra').textContent='';
+  document.getElementById('gameOverScreen').classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+//   LINE CLEAR EFFECTS
+// ══════════════════════════════════════════════
+function triggerLineClearFX(rows, count, isTspin) {
+  const flash=document.getElementById('flashOverlay');
+  flash.className='flash-overlay';
+  void flash.offsetWidth;
+  flash.className='flash-overlay '+(isTspin?'tspin-flash':'flash');
+
+  const shake=count>=4||isTspin?'shake-big':'shake';
+  boardCanvas.parentElement.style.animation=`${shake} 0.3s ease`;
+  setTimeout(()=>boardCanvas.parentElement.style.animation='',300);
+
+  rows.forEach(r=>{
+    for(let c=0;c<COLS;c++){
+      const color=board[r][c]||'I';
+      spawnParticleBurst(c*CS+CS/2,r*CS+CS/2,GLOW_COLORS[color]||'#00f5ff',count);
+    }
+  });
+
+  const labels=['','','DOUBLE!','TRIPLE!!','TETRIS!!'];
+  const colors=['','#06d6a0','#00f5ff','#ffbe0b','#ff006e'];
+  if(!isTspin&&count>=2) showComboText(labels[count],colors[count],rows[0]*CS);
+}
+
+function triggerPerfectClearFX() {
+  const flash=document.getElementById('flashOverlay');
+  flash.className='flash-overlay perfect-flash';
+  boardCanvas.parentElement.style.animation='shake-big 0.6s ease';
+  setTimeout(()=>boardCanvas.parentElement.style.animation='',600);
+  // Burst particles everywhere
+  for(let r=0;r<ROWS;r+=3) for(let c=0;c<COLS;c+=2) {
+    spawnParticleBurst(c*CS+CS/2,r*CS+CS/2,'#ffbe0b',6);
+  }
+}
+
+function showAnnounce(text, cls) {
+  const banner=document.createElement('div');
+  banner.className='announce-banner';
+  const inner=document.createElement('div');
+  inner.className='banner-inner '+(cls||'banner-tspin');
+  inner.textContent=text;
+  banner.appendChild(inner);
+  const bf=boardCanvas.parentElement.parentElement;
+  bf.appendChild(banner);
+  setTimeout(()=>banner.remove(),1300);
+}
+
+function showComboText(text,color,yPos) {
+  if(!text)return;
+  const el=document.createElement('div');
+  el.className='combo-text';el.textContent=text;
+  el.style.color=color;el.style.top=Math.max(10,yPos)+'px';
+  boardCanvas.parentElement.parentElement.appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
+// ── Particle system ──
+function spawnParticleBurst(px,py,color,intensity) {
+  const count=8+intensity*4;
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=2+Math.random()*(3+intensity*1.5);
+    particles_list.push({x:px,y:py,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      life:1,decay:.02+Math.random()*.03,size:2+Math.random()*(3+intensity),color,glow:intensity>=4});
+  }
+  for(let i=0;i<count/2;i++){
+    const angle=Math.random()*Math.PI*2, speed=4+Math.random()*6;
+    particles_list.push({x:px,y:py,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-3,
+      life:1,decay:.04+Math.random()*.05,size:1,color:'#ffffff',glow:false,spark:true});
+  }
+}
+function updateParticles(){
+  partCtx.clearRect(0,0,BW,BH);
+  particles_list=particles_list.filter(p=>p.life>0);
+  for(const p of particles_list){
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.vx*=.96;p.life-=p.decay;
+    const alpha=Math.max(0,p.life);
+    partCtx.save();partCtx.globalAlpha=alpha;
+    if(p.glow){partCtx.shadowColor=p.color;partCtx.shadowBlur=12;}
+    partCtx.fillStyle=p.spark?`rgba(255,255,255,${alpha})`:p.color;
+    partCtx.beginPath();partCtx.arc(p.x,p.y,p.size*alpha,0,Math.PI*2);partCtx.fill();
+    partCtx.restore();
+  }
+}
+
+// ══════════════════════════════════════════════
+//   RENDER
+// ══════════════════════════════════════════════
+function drawCell(ctx,x,y,color,size=CS,ghost=false) {
+  const px=x*size, py=y*size;
+  if(!color||color==='E')return;
+  const col=COLORS[color]||color;
+  ctx.save();
+  if(ghost){
+    ctx.globalAlpha=.18;ctx.fillStyle=col;ctx.fillRect(px+1,py+1,size-2,size-2);
+    ctx.strokeStyle=col;ctx.lineWidth=1;ctx.strokeRect(px+1,py+1,size-2,size-2);
+    ctx.restore();return;
+  }
+  const grad=ctx.createLinearGradient(px,py,px+size,py+size);
+  grad.addColorStop(0,col);grad.addColorStop(1,shadeColor(col,-30));
+  ctx.fillStyle=grad;ctx.fillRect(px+1,py+1,size-2,size-2);
+  ctx.shadowColor=col;ctx.shadowBlur=8;ctx.fillStyle=col;ctx.fillRect(px+2,py+2,size-4,size-4);
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.fillRect(px+2,py+2,size-4,2);ctx.fillRect(px+2,py+2,2,size-4);
+  ctx.restore();
+}
+function shadeColor(hex,pct){
+  const num=parseInt(hex.slice(1),16);
+  const r=Math.min(255,Math.max(0,(num>>16)+pct));
+  const g=Math.min(255,Math.max(0,((num>>8)&0xff)+pct));
+  const b=Math.min(255,Math.max(0,(num&0xff)+pct));
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+function render(){
+  boardCtx.clearRect(0,0,BW,BH);
+  boardCtx.strokeStyle='rgba(26,58,107,0.4)';boardCtx.lineWidth=.5;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++) boardCtx.strokeRect(c*CS,r*CS,CS,CS);
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++) if(board[r][c])drawCell(boardCtx,c,r,board[r][c]);
+  if(current&&gameRunning&&!paused){
+    const gy=ghostY();
+    for(let r=0;r<current.matrix.length;r++) for(let c=0;c<current.matrix[r].length;c++)
+      if(current.matrix[r][c]) drawCell(boardCtx,current.x+c,gy+r,current.color,CS,true);
+  }
+  if(current&&gameRunning){
+    for(let r=0;r<current.matrix.length;r++) for(let c=0;c<current.matrix[r].length;c++)
+      if(current.matrix[r][c]&&current.y+r>=0) drawCell(boardCtx,current.x+c,current.y+r,current.color);
+  }
+  updateParticles();
+  drawPreview(holdCtx,hold?newPiece(hold):null,holdCanvas.width,holdCanvas.height);
+  drawPreview(nextCtx,next[0]?newPiece(next[0]):null,nextCanvas.width,nextCanvas.height);
+}
+function drawPreview(ctx,piece,w,h){
+  ctx.clearRect(0,0,w,h);if(!piece)return;
+  const ps=Math.min(Math.floor(w/piece.matrix[0].length),Math.floor(h/piece.matrix.length),20);
+  const ox=Math.floor((w-piece.matrix[0].length*ps)/2);
+  const oy=Math.floor((h-piece.matrix.length*ps)/2);
+  for(let r=0;r<piece.matrix.length;r++) for(let c=0;c<piece.matrix[r].length;c++)
+    if(piece.matrix[r][c]) drawCell(ctx,c,r,piece.color,ps);
+  const imgData=ctx.getImageData(0,0,w,h);
+  ctx.clearRect(0,0,w,h);ctx.putImageData(imgData,ox,oy);
+}
+function renderOpponentBoard(oppBoard) {
+  if(!oppBoard)return;
+  const cw=oppCanvas.width, ch=oppCanvas.height;
+  const cs=Math.floor(Math.min(cw/COLS,ch/ROWS));
+  oppCtx.fillStyle='#050a14';oppCtx.fillRect(0,0,cw,ch);
+  oppCtx.strokeStyle='rgba(26,58,107,0.3)';oppCtx.lineWidth=.3;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    oppCtx.strokeRect(c*cs,r*cs,cs,cs);
+    if(oppBoard[r]&&oppBoard[r][c]) drawCell(oppCtx,c,r,oppBoard[r][c],cs);
+  }
+}
+function animLoop(){if(gameRunning)render();requestAnimationFrame(animLoop);}
+
+// ══════════════════════════════════════════════
+//   HUD
+// ══════════════════════════════════════════════
+function updateHUD(){
+  document.getElementById('scoreDisplay').textContent=score.toLocaleString();
+  document.getElementById('levelDisplay').textContent=level;
+  document.getElementById('linesDisplay').textContent=lines;
+  renderLB(document.getElementById('lbRows'));
+}
+function updateGarbageUI() {
+  const el=document.getElementById('garbageBlocks');
+  if(!el)return;
+  el.innerHTML=Array(pendingGarbage).fill('<div class="garbage-block"></div>').join('');
+}
+
+// ══════════════════════════════════════════════
+//   FIREBASE + LEADERBOARD
+// ══════════════════════════════════════════════
+let db=null, lbListener=null;
+const FB_CFG_KEY='fbCfg';
+
+function initFirebase(){
+  const saved=localStorage.getItem(FB_CFG_KEY);
+  if(!saved){ showFBOffline(); return; }
+  try{
+    const cfg=JSON.parse(saved);
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    else firebase.app(); // reuse existing
+    db=firebase.database();
+    showFBOnline();
+    startLBListener();
+  }catch(e){ db=null; showFBOffline(); }
+}
+
+function showFBOnline(){
+  document.getElementById('liveDot').style.display='inline-block';
+  const dot=document.getElementById('fbStatusDot');
+  const txt=document.getElementById('fbStatusText');
+  const btn=document.getElementById('fbConnectBtn');
+  if(dot){ dot.className='fb-dot on'; }
+  if(txt){ txt.textContent='ONLINE'; txt.style.color='var(--c5)'; }
+  if(btn){ btn.style.display='none'; }
+}
+function showFBOffline(){
+  const dot=document.getElementById('fbStatusDot');
+  const txt=document.getElementById('fbStatusText');
+  const btn=document.getElementById('fbConnectBtn');
+  if(dot){ dot.className='fb-dot off'; }
+  if(txt){ txt.textContent='OFFLINE'; txt.style.color='#2a4a70'; }
+  if(btn){ btn.style.display='inline'; }
+}
+
+function openFBModal(){
+  // Pre-fill if already have config
+  const saved=localStorage.getItem(FB_CFG_KEY);
+  if(saved) document.getElementById('fbModalInput').value=saved;
+  document.getElementById('fbModal').classList.add('on');
+}
+function closeFBModal(){
+  document.getElementById('fbModal').classList.remove('on');
+}
+function connectFBFromModal(){
+  const raw=document.getElementById('fbModalInput').value.trim();
+  let cfg;
+  try{ cfg=JSON.parse(raw); } catch(e){
+    document.getElementById('fbModalErr').textContent='❌ JSON 형식이 맞지 않아요. { }로 시작하는지 확인해주세요.'; return;
+  }
+  if(!cfg.databaseURL){
+    document.getElementById('fbModalErr').textContent='❌ databaseURL이 없어요! Realtime Database를 활성화하셨나요?'; return;
+  }
+  try{
+    // Clean up existing apps
+    firebase.apps.forEach(app=>{ try{ app.delete(); }catch{} });
+    firebase.initializeApp(cfg);
+    db=firebase.database();
+    localStorage.setItem(FB_CFG_KEY,raw);
+    showFBOnline();
+    startLBListener();
+    closeFBModal();
+    document.getElementById('fbModalErr').textContent='';
+  }catch(e){
+    document.getElementById('fbModalErr').textContent='❌ '+e.message;
+  }
+}
+function startLBListener(){
+  if(!db)return;
+  if(lbListener)db.ref('tetris/scores').off('value',lbListener);
+  lbListener=db.ref('tetris/scores').orderByChild('score').limitToLast(20)
+    .on('value',snap=>{
+      const rows=[];snap.forEach(c=>rows.push(c.val()));rows.sort((a,b)=>b.score-a.score);
+      try{localStorage.setItem('tetris_lb_cache',JSON.stringify(rows));}catch{}
+      renderLBData(rows.slice(0,8),document.getElementById('lbRows'));
+      renderTitleLBData(rows.slice(0,10));
+    });
+}
+async function saveScore(){
+  if(score===0)return;
+  const lb=getLBLocal();
+  lb.push({name:playerName,score,lines,level,date:Date.now()});
+  lb.sort((a,b)=>b.score-a.score);saveLBLocal(lb.slice(0,20));
+  if(db){try{await db.ref('tetris/scores').push({name:playerName,score,lines,level,ts:Date.now()});}catch(e){}}
+}
+function getLBLocal(){try{return JSON.parse(localStorage.getItem('tetris_lb')||'[]');}catch{return[];}}
+function saveLBLocal(data){try{localStorage.setItem('tetris_lb',JSON.stringify(data));}catch{}}
+function getLBData(){
+  try{const c=localStorage.getItem('tetris_lb_cache');if(c)return JSON.parse(c);}catch{}
+  return getLBLocal();
+}
+function renderLB(container){renderLBData(getLBData().slice(0,8),container);}
+function renderLBData(lb,container){
+  if(!container)return;
+  const icons=['🥇','🥈','🥉'],cls=['gold','silver','bronze'];
+  container.innerHTML=lb.map((e,i)=>`
+    <div class="lb-row${e.name===playerName?' lb-mine':''}">
+      <div class="lb-rank ${cls[i]||''}">${icons[i]||i+1}</div>
+      <div class="lb-name">${e.name}</div>
+      <div class="lb-score">${e.score.toLocaleString()}</div>
+    </div>`).join('')||'<div style="font-size:.55rem;color:#2a4a70;padding:4px">아직 기록이 없어요</div>';
+}
+function renderTitleLB(){renderTitleLBData(getLBData().slice(0,10));}
+function renderTitleLBData(lb){
+  const icons=['🥇','🥈','🥉'];
+  document.getElementById('titleLBRows').innerHTML=lb.map((e,i)=>`
+    <div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #0a2040;align-items:center">
+      <span style="font-size:.7rem;color:#4a6a90;width:20px">${icons[i]||i+1}</span>
+      <span style="font-size:.75rem;color:#ffbe0b;flex:1;text-align:left">${e.name}</span>
+      <span style="font-size:.75rem;color:#00f5ff">${e.score.toLocaleString()}</span>
+    </div>`).join('')||'<div style="font-size:.65rem;color:#2a4a70">첫 번째 기록을 남겨보세요!</div>';
+}
+
+// ══════════════════════════════════════════════
+//   ⚔ BATTLE MODE
+// ══════════════════════════════════════════════
+function goBattleLobby() {
+  playerName=document.getElementById('playerName').value.trim()||'PLAYER';
+  if(!db){
+    alert('대전 모드는 Firebase 연결이 필요해요!\n\n같은 Firebase config를 다른 게임(망작 메이커 등)에서 쓴 적 있다면 자동으로 연결됩니다. 없다면 오프라인으로 즐겨주세요.');
+    return;
+  }
+  show('battleLobby');
+  document.getElementById('battleStatus').textContent='';
+  document.getElementById('roomCodeDisplay').style.display='none';
+}
+
+function genRoomCode() {
+  return Math.random().toString(36).slice(2,8).toUpperCase();
+}
+
+async function createBattleRoom() {
+  if(!db)return;
+  const code=genRoomCode();
+  battleRoomCode=code;
+  battleRole='p1';
+  battleRoomRef=db.ref('tetris/rooms/'+code);
+
+  await battleRoomRef.set({
+    status:'waiting',
+    p1:{name:playerName,score:0,board:null,garbage:0},
+    p2:{name:'',score:0,board:null,garbage:0},
+    createdAt:Date.now()
+  });
+
+  document.getElementById('roomCodeDisplay').style.display='block';
+  document.getElementById('roomCodeDisplay').textContent=code;
+  document.getElementById('battleStatus').textContent='⏳ 친구가 입장하길 기다리는 중...';
+
+  // Listen for opponent joining
+  battleRoomRef.child('p2/name').on('value',snap=>{
+    if(snap.val()&&snap.val()!=='') {
+      document.getElementById('battleStatus').textContent=`✅ ${snap.val()} 입장! 게임 시작!`;
+      setTimeout(()=>startBattleGame(),1000);
+    }
+  });
+
+  // Remove room on disconnect
+  battleRoomRef.onDisconnect().remove();
+}
+
+async function joinBattleRoom() {
+  if(!db)return;
+  const code=document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if(code.length!==6){alert('방 코드는 6자리예요!');return;}
+
+  const snap=await db.ref('tetris/rooms/'+code).once('value');
+  if(!snap.exists()){alert('방을 찾을 수 없어요!');return;}
+  const data=snap.val();
+  if(data.status!=='waiting'){alert('이미 진행 중인 방이에요!');return;}
+
+  battleRoomCode=code;
+  battleRole='p2';
+  battleRoomRef=db.ref('tetris/rooms/'+code);
+
+  await battleRoomRef.child('p2').update({name:playerName,score:0,board:null,garbage:0});
+  document.getElementById('battleStatus').textContent=`✅ 입장 완료! 게임 시작!`;
+  setTimeout(()=>startBattleGame(),1000);
+}
+
+function startBattleGame() {
+  battleMode=true;
+  pendingGarbage=0;
+  document.getElementById('opponentPanel').classList.add('on');
+  document.getElementById('oppName').textContent=battleRole==='p1'?
+    battleRoomRef?'상대':'???':
+    '???';
+
+  // Listen for opponent data
+  const oppRole=battleRole==='p1'?'p2':'p1';
+  battleRoomRef.child(oppRole+'/name').once('value',snap=>{
+    document.getElementById('oppName').textContent=snap.val()||'???';
+  });
+  battleRoomRef.child(oppRole).on('value',snap=>{
+    if(!snap.exists())return;
+    const d=snap.val();
+    if(d.board) renderOpponentBoard(d.board);
+    document.getElementById('oppScore').textContent=(d.score||0).toLocaleString();
+    if(d.status==='gameover') endBattle('win');
+  });
+
+  // Listen for incoming garbage
+  const myRole=battleRole;
+  battleRoomRef.child(myRole+'/garbage').on('value',snap=>{
+    const g=snap.val()||0;
+    if(g>0&&gameRunning) {
+      pendingGarbage+=g;
+      battleRoomRef.child(myRole+'/garbage').set(0);
+      updateGarbageUI();
+    }
+  });
+
+  // Update room status
+  if(battleRole==='p1') battleRoomRef.child('status').set('playing');
+  initGameInternal(true);
+}
+
+function syncBattleBoard() {
+  if(!battleRoomRef||!battleMode)return;
+  // Sync board (serialize: replace null with empty string for Firebase)
+  const serialized=board.map(row=>row.map(c=>c||''));
+  battleRoomRef.child(battleRole).update({board:serialized,score});
+}
+
+function sendGarbage(count) {
+  if(!battleRoomRef)return;
+  const oppRole=battleRole==='p1'?'p2':'p1';
+  battleRoomRef.child(oppRole+'/garbage').once('value',snap=>{
+    const cur=snap.val()||0;
+    battleRoomRef.child(oppRole+'/garbage').set(cur+count);
+  });
+}
+
+function endBattle(result) {
+  gameRunning=false;
+  clearTimeout(dropTimer);
+  if(battleRoomRef) {
+    battleRoomRef.child(battleRole+'/status').set('gameover');
+    setTimeout(()=>{if(battleRoomRef)battleRoomRef.remove();},3000);
+  }
+  battleMode=false;
+  document.getElementById('opponentPanel').classList.remove('on');
+
+  const won=result==='win';
+  document.getElementById('goTitle').textContent=won?'🏆 WIN!':'💀 LOSE!';
+  document.getElementById('goTitle').style.color=won?'var(--c5)':'var(--c2)';
+  document.getElementById('goExtra').textContent=won?'상대방이 탈락했습니다!':'다음엔 꼭 이겨보세요!';
+  document.getElementById('goScore').textContent=score.toLocaleString();
+  document.getElementById('goLines').textContent=`LINES: ${lines} | LEVEL: ${level}`;
+  document.getElementById('gameOverScreen').classList.add('active');
+  saveScore();
+}
+
+// ══════════════════════════════════════════════
+//   INPUT
+// ══════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(!gameRunning)return;
+  switch(e.code){
+    case 'ArrowLeft':case 'KeyA':
+      if(!collides(current,-1,0)){current.x--;lastRotated=false;sfx('move');render();}break;
+    case 'ArrowRight':case 'KeyD':
+      if(!collides(current,1,0)){current.x++;lastRotated=false;sfx('move');render();}break;
+    case 'ArrowDown':case 'KeyS':softDrop();break;
+    case 'ArrowUp':case 'KeyW':case 'KeyX':rotate(1);render();break;
+    case 'KeyZ':rotate(-1);render();break;
+    case 'Space':e.preventDefault();hardDrop();break;
+    case 'KeyC':case 'ShiftLeft':doHold();break;
+    case 'KeyP':case 'Escape':togglePause();break;
+  }
+});
+const touchTimers={};
+function touchAction(action){
+  if(!gameRunning)return;
+  switch(action){
+    case 'left':if(!collides(current,-1,0)){current.x--;lastRotated=false;sfx('move');render();}break;
+    case 'right':if(!collides(current,1,0)){current.x++;lastRotated=false;sfx('move');render();}break;
+    case 'down':softDrop();break;
+    case 'up':rotate(1);render();break;
+    case 'drop':hardDrop();break;
+    case 'hold':doHold();break;
+    case 'pause':togglePause();break;
+  }
+}
+function touchStart(dir){touchAction(dir);touchTimers[dir]=setInterval(()=>touchAction(dir),120);}
+function touchEnd(dir){clearInterval(touchTimers[dir]);}
+function togglePause(){
+  paused=!paused;
+  document.getElementById('pauseOverlay').classList.toggle('active',paused);
+  if(!paused)scheduleDrop();
+  if(paused)stopBGM();else startBGM();
+}
+
+// ══════════════════════════════════════════════
+//   GAME FLOW
+// ══════════════════════════════════════════════
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function startGame(){
+  playerName=document.getElementById('playerName').value.trim()||'PLAYER';
+  battleMode=false;
+  battleRoomRef=null;
+  initGameInternal(false);
+}
+function restartGame(){
+  document.getElementById('gameOverScreen').classList.remove('active');
+  document.getElementById('goTitle').style.color='';
+  if(battleMode){goBattleLobby();return;}
+  initGameInternal(false);
+}
+function goToTitle(){
+  document.getElementById('gameOverScreen').classList.remove('active');
+  document.getElementById('goTitle').style.color='';
+  document.getElementById('gameScreen').style.display='none';
+  document.getElementById('titleScreen').classList.add('active');
+  document.getElementById('bgmBtn').style.display='none';
+  battleMode=false;battleRoomRef=null;
+  renderTitleLB();stopBGM();
+}
+function goBattleLobbyFromGame(){
+  goToTitle();setTimeout(()=>goBattleLobby(),100);
+}
+
+function initGameInternal(battle) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('gameScreen').style.display='flex';
+  document.getElementById('bgmBtn').style.display='block';
+  resizeCanvases();
+
+  board=null;current=null;hold=null;next=[];bag=[];
+  score=0;level=1;lines=0;combo=0;holdUsed=false;
+  particles_list=[];lastRotated=false;lastKickUsed=false;prevLevel=1;
+  pendingGarbage=0;
+  initBoard();refillBag();
+  for(let i=0;i<3;i++)next.push(nextFromBag());
+  gameRunning=true;paused=false;
+  document.getElementById('pauseOverlay').classList.remove('active');
+  updateHUD();renderLB(document.getElementById('lbRows'));
+  if(!battle) document.getElementById('opponentPanel').classList.remove('on');
+  spawnNext();
+  startBGM();
+}
+
+window.addEventListener('resize',()=>{if(gameRunning){resizeCanvases();render();}});
+
+// ══════════════════════════════════════════════
+//   INIT
+// ══════════════════════════════════════════════
+const shakeStyle=document.createElement('style');
+shakeStyle.textContent=`
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@keyframes shake-big{0%,100%{transform:translate(0)}10%{transform:translate(-6px,-4px)}20%{transform:translate(6px,4px)}30%{transform:translate(-6px,4px)}40%{transform:translate(6px,-4px)}50%{transform:translate(-4px,2px)}60%{transform:translate(4px,-2px)}70%{transform:translate(-2px,4px)}80%{transform:translate(2px,-2px)}90%{transform:translate(-2px,2px)}}
+`;
+document.head.appendChild(shakeStyle);
+
+resizeCanvases();
+renderTitleLB();
+animLoop();
+initFirebase();
+
+setTimeout(()=>document.getElementById('playerName').focus(),100);
+document.getElementById('playerName').addEventListener('keydown',e=>{
+  if(e.key==='Enter')startGame();
+});
+</script>
+</body>
+</html>
