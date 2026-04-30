@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레이븐우드 클라이밍 아카데미</title>
+<meta property="og:title" content="레이븐우드 클라이밍 아카데미 — 입학 시험">
+<meta property="og:description" content="전 세계 12명만 입학하는 비밀 클라이밍 학교. 나의 클라이밍 소울은?">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0d0b;--s1:#16140f;--s2:#1e1b13;--s3:#252117;
+  --b1:#2a2619;--b2:#3c3724;
+  --text:#e6ddc8;--t2:#9a8f6e;--t3:#5a5338;
+  --gold:#c8a44a;--gold2:#8a5c28;--goldf:#f0d090;
+  --grn:#3d7054;--red:#9e3838;--r:8px;
+}
+html{-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;line-height:1.7}
+.page{max-width:460px;margin:0 auto;padding:0 1.25rem 5rem;position:relative;z-index:1}
+
+/* cover */
+#cover{padding:3.5rem 0 2rem;display:flex;flex-direction:column;align-items:center}
+.cov-badge{display:flex;align-items:center;gap:10px;margin-bottom:2.5rem}
+.cov-line{width:36px;height:1px;background:var(--b2)}
+.cov-btxt{font-size:9px;letter-spacing:.3em;color:var(--t3)}
+.cov-em{font-size:58px;margin-bottom:1.5rem}
+.cov-title{font-family:'Noto Serif KR',serif;font-size:25px;font-weight:600;color:var(--text);text-align:center;line-height:1.3;margin-bottom:.4rem}
+.cov-en{font-size:10px;letter-spacing:.28em;color:var(--t3);margin-bottom:2rem}
+.cov-rule{width:1px;height:44px;background:var(--b2);margin-bottom:2rem}
+.cov-desc{font-size:14px;color:var(--t2);text-align:center;line-height:1.95;margin-bottom:.6rem}
+.cov-note{font-size:11px;color:var(--t3);text-align:center;margin-bottom:2.5rem}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:100%;margin-bottom:2.5rem}
+.sc{border:1px solid var(--b1);border-radius:6px;padding:.65rem .4rem;text-align:center;background:var(--s1)}
+.sc em{font-size:20px;display:block;margin-bottom:3px;font-style:normal}
+.sc span{font-size:9px;letter-spacing:.14em;color:var(--t3)}
+.start-btn{width:100%;padding:16px;background:var(--gold2);color:var(--goldf);border:none;border-radius:var(--r);font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:500;cursor:pointer;letter-spacing:.06em;transition:background .15s}
+.start-btn:hover{background:#a07030}
+
+/* quiz */
+#quiz{display:none;padding-top:2.5rem}
+.pg-bg{height:2px;background:var(--b1);border-radius:1px;overflow:hidden;margin-bottom:.7rem}
+.pg-fill{height:100%;background:var(--gold);border-radius:1px;transition:width .45s ease}
+.pg-meta{display:flex;justify-content:space-between;margin-bottom:2rem}
+.pg-scene{font-size:10px;letter-spacing:.1em;color:var(--t3)}
+.pg-num{font-size:10px;color:var(--t3)}
+.q-chapter{font-size:10px;letter-spacing:.2em;color:var(--gold2);margin-bottom:.35rem}
+.q-title{font-family:'Noto Serif KR',serif;font-size:19px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:1.1rem}
+.q-story{border-left:2px solid var(--b2);padding:.85rem 1rem;background:var(--s1);margin-bottom:1.5rem}
+.q-story p{font-size:13px;color:var(--t2);line-height:1.95}
+.q-prompt{font-size:10px;letter-spacing:.14em;color:var(--t3);margin-bottom:.35rem}
+.q-text{font-size:15px;font-weight:500;color:var(--text);margin-bottom:1rem;line-height:1.5}
+.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:1.6rem}
+.opt{position:relative;padding:13px 14px 13px 42px;border:1px solid var(--b1);border-radius:var(--r);background:var(--s1);color:var(--t2);font-family:'Noto Sans KR',sans-serif;font-size:14px;text-align:left;cursor:pointer;line-height:1.65;transition:border-color .12s,background .12s,color .12s;width:100%}
+.opt::before{content:'';position:absolute;left:15px;top:16px;width:14px;height:14px;border-radius:50%;border:1.5px solid var(--b2);transition:all .12s}
+.opt:hover{border-color:var(--b2);background:var(--s2);color:var(--text)}
+.opt.sel{border-color:var(--gold2);background:var(--s2);color:var(--text)}
+.opt.sel::before{background:var(--gold2);border-color:var(--gold2)}
+.opt.sel::after{content:'';position:absolute;left:20px;top:21px;width:4px;height:4px;border-radius:50%;background:var(--goldf)}
+.nav{display:flex;justify-content:space-between;align-items:center}
+.nav-back{padding:10px 18px;border:1px solid var(--b1);border-radius:6px;background:transparent;color:var(--t3);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;transition:border-color .12s,color .12s}
+.nav-back:hover{border-color:var(--b2);color:var(--t2)}
+.nav-back:disabled{opacity:.2;cursor:default}
+.nav-next{padding:10px 24px;background:var(--gold2);color:var(--goldf);border:none;border-radius:6px;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .12s}
+.nav-next:hover{background:#a07030}
+.nav-next:disabled{opacity:.3;cursor:default}
+
+/* result */
+#result{display:none;padding-top:2.5rem}
+.r-kicker{font-size:9px;letter-spacing:.28em;color:var(--t3);text-align:center;margin-bottom:2rem}
+.r-em{width:80px;height:80px;border-radius:50%;border:1px solid var(--b2);background:var(--s1);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 1.2rem}
+.r-pill{display:flex;justify-content:center;margin-bottom:.5rem}
+.r-pill span{font-size:9px;letter-spacing:.22em;color:var(--gold);border:1px solid var(--gold2);padding:3px 10px;border-radius:3px}
+.r-name{font-family:'Noto Serif KR',serif;font-size:19px;font-weight:600;color:var(--text);text-align:center;line-height:1.4;margin-bottom:.3rem}
+.r-sub{font-size:11px;color:var(--t3);text-align:center;letter-spacing:.07em;margin-bottom:1.5rem}
+.r-desc{font-size:14px;color:var(--t2);line-height:1.95;border-left:2px solid var(--b2);padding:.85rem 1rem;background:var(--s1);margin-bottom:1.2rem}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.4rem}
+.tag{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--b2);color:var(--t3);background:var(--s1);letter-spacing:.03em}
+.tag.hl{border-color:var(--gold2);color:var(--gold)}
+.r-cards{border:1px solid var(--b1);border-radius:10px;overflow:hidden;margin-bottom:1.2rem}
+.rc{border-bottom:1px solid var(--b1)}
+.rc:last-child{border-bottom:none}
+.rc-head{padding:.65rem 1rem;background:var(--s1);display:flex;align-items:center;gap:7px}
+.rc-ico{font-size:12px;width:18px;text-align:center}
+.rc-label{font-size:10px;letter-spacing:.12em;font-weight:500;color:var(--t3)}
+.rc-body{padding:.85rem 1rem;font-size:13px;color:var(--t2);line-height:1.85}
+.rc-quote{font-size:14px;color:var(--text);border-left:2px solid var(--gold2);padding-left:.9rem;font-style:italic;border-radius:0}
+.compat{display:flex;flex-direction:column;gap:.8rem}
+.compat-row{display:flex;gap:10px}
+.compat-em{font-size:14px;width:20px;flex-shrink:0;padding-top:2px}
+.compat-type{font-size:10px;letter-spacing:.1em;font-weight:500;margin-bottom:2px}
+.compat-good .compat-type{color:var(--grn)}
+.compat-bad .compat-type{color:var(--red)}
+.compat-soul{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+.compat-desc{font-size:12px;color:var(--t2);line-height:1.7}
+.crow-card{border:1px solid var(--b1);border-radius:10px;padding:1rem 1.1rem;display:flex;gap:12px;align-items:flex-start;margin-bottom:1.2rem}
+.crow-av{width:38px;height:38px;border-radius:50%;background:var(--s1);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.crow-who{font-size:9px;letter-spacing:.15em;color:var(--t3);margin-bottom:4px;font-weight:500}
+.crow-says{font-size:13px;color:var(--t2);line-height:1.8;font-style:italic}
+.actions{display:flex;flex-direction:column;gap:8px}
+.btn-main{width:100%;padding:14px;background:var(--gold2);color:var(--goldf);border:none;border-radius:var(--r);font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-main:hover{background:#a07030}
+.btn-ghost{width:100%;padding:12px;border:1px solid var(--b2);border-radius:var(--r);background:transparent;color:var(--t3);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;transition:border-color .12s,color .12s}
+.btn-ghost:hover{border-color:var(--b2);color:var(--t2)}
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s3);border:1px solid var(--b2);border-radius:6px;padding:10px 20px;font-size:13px;color:var(--t2);opacity:0;transition:all .3s ease;pointer-events:none;white-space:nowrap;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.fade-in{animation:fi .35s ease forwards}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="page">
+<div id="cover" class="fade-in">
+  <div class="cov-badge"><div class="cov-line"></div><div class="cov-btxt">RAVENWOOD CLIMBING ACADEMY</div><div class="cov-line"></div></div>
+  <div class="cov-em">🏔</div>
+  <div class="cov-title">레이븐우드<br>클라이밍 아카데미</div>
+  <div class="cov-en">ENTRANCE EXAMINATION</div>
+  <div class="cov-rule"></div>
+  <div class="cov-desc">전 세계 12명만 입학하는 비밀 클라이밍 학교.<br>오늘 아침, 당신에게 초크백이 배달됐습니다.</div>
+  <div class="cov-note">10개의 장면 · 6가지 클라이밍 소울</div>
+  <div class="sgrid">
+    <div class="sc"><em>🦉</em><span>ANALYST</span></div>
+    <div class="sc"><em>🌊</em><span>SKIN</span></div>
+    <div class="sc"><em>⚡</em><span>IGNITE</span></div>
+    <div class="sc"><em>🌿</em><span>BLOOM</span></div>
+    <div class="sc"><em>🗡</em><span>BLADE</span></div>
+    <div class="sc"><em>🔥</em><span>SPARK</span></div>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">입학 시험 시작하기 →</button>
+</div>
+<div id="quiz"></div>
+<div id="result"></div>
+<div class="toast" id="toast">복사됐어요! 친구에게 보내보세요 🧗</div>
+</div>
+<script>
+const Qs=[
+  {scene:"1장 — 도착",title:"초크백이 배달됐다",
+   story:"월요일 아침, 현관 앞에 낡은 초크백 하나. 안에는 좌표가 적힌 쪽지와 짧은 메모. '레이븐우드가 당신을 선택했습니다. 72시간 안에 결정하세요.' 그게 다였다.",
+   q:"72시간 동안 어떻게 보냈어요?",
+   opts:["구글부터 커뮤니티, 논문까지 다 뒤졌지. 정보 없으면 발이 안 떨어지잖아.","일단 짐부터 싸자. 이유는 가면서 생각하면 되잖아.","가야 할 이유랑 말아야 할 이유를 쭉 적어봤어. 정리가 돼야 결정이 되니까.","친구들한테 먼저 자랑했지. 혼자 흥분하는 건 너무 아쉽잖아."],
+   s:[[2,0,0,0,1,0],[0,0,2,1,0,0],[0,0,0,0,2,1],[0,1,0,0,0,2]]},
+  {scene:"2장 — 입학 시험",title:"교장 알바 크로우의 첫 루트",
+   story:"도착 첫날. 교장이 말했다. '인사는 나중에. 저 루트 올라라.' 아무 설명 없이 검은 벽을 가리켰다. 홀드가 보이지 않았다. 어딘가에 있다는 것만 확실했다.",
+   q:"어떻게 접근했어요?",
+   opts:["일단 멀리서 5분은 봤어. 빛 반사각이 다른 곳이 있더라고.","눈 감고 벽에 손 얹어봤어. 질감이 달라지는 데 따라가면 되잖아.","그냥 올라갔어. 잡히는 데 잡으면서 가면 되지 뭐.","다른 사람들 어떻게 하나 먼저 봤어. 다들 방법이 다르더라고."],
+   s:[[2,0,0,0,1,0],[0,2,0,0,0,0],[0,0,2,0,0,0],[0,0,0,1,0,2]]},
+  {scene:"3장 — 기숙사 배정",title:"방은 당신이 선택하는 게 아니다",
+   story:"기숙사 배정 방식: 12개 루트 중 하나를 골라 오르면 그 루트가 방을 정한다. 루트마다 난이도도 스타일도 달랐다. 제한 시간 3분.",
+   q:"어떤 루트를 골랐어요?",
+   opts:["제일 어려운 루트로 갔어. 어차피 보여줄 거면 지금이 낫잖아.","홀드가 제일 예쁘게 생긴 루트로 갔지. 첫인상이 중요하잖아.","루트 설명 꼼꼼히 읽고 내 스타일에 맞는 걸 골랐어.","같이 배정될 것 같은 사람 옆 루트로 갔지. 룸메이트도 중요하니까."],
+   s:[[0,0,1,0,2,0],[0,2,0,1,0,0],[2,0,0,0,1,0],[0,0,0,0,0,2]]},
+  {scene:"4장 — 레이 교수의 수업",title:"눈을 가려라",
+   story:"레이 교수가 수업 시작하자마자 안대를 나눠줬다. '오늘 수업은 간단해요. 눈 가리고 이 루트 완등하면 A+.' 그러더니 본인이 먼저 눈 가리고 벽에 붙었다.",
+   q:"어떻게 했어요?",
+   opts:["안대 쓰기 전에 루트를 머릿속에 다 새겼어. 동작 순서까지.","안대 쓰고 바로 올라갔지. 몸이 알아서 하잖아.","안대 쓰는 척하다가 살짝 들췄어. 지는 건 싫으니까.","못 올라가도 괜찮다고 생각했어. 이 경험 자체가 이미 재밌잖아."],
+   s:[[2,0,0,0,1,0],[0,2,1,0,0,0],[0,0,0,0,2,0],[0,0,0,2,0,1]]},
+  {scene:"5장 — 사건 발생",title:"누군가 루트를 바꿔놨다",
+   story:"새벽 3시쯤 복도에서 소리가 났다. 아침에 일어나보니 어젯밤에 연습하던 루트 홀드가 싹 다 바뀌어 있었다. 교수들은 모른다고 했다.",
+   q:"어떻게 반응했어요?",
+   opts:["홀드 변경 흔적을 뜯어봤어. 볼트 자국 방향으로 범인을 추릴 수 있거든.","딱히 화가 안 나던데. 어차피 새 루트 생긴 셈이잖아.","범인보다 바뀐 루트를 먼저 탔어. 내 실력은 안 바뀌니까.","다 같이 모아서 공개적으로 풀자고 했어. 혼자 끙끙대는 게 더 이상하잖아."],
+   s:[[2,0,0,0,1,0],[0,2,0,1,0,0],[0,0,2,0,0,0],[0,0,0,0,0,2]]},
+  {scene:"6장 — 라이벌 카이",title:"카이가 도전장을 내밀었다",
+   story:"카이가 다가와 말했다. '너 나보다 잘하는 척하는 거 알아. 내일 빨간 루트에서 붙자.' 그 루트, 카이가 두 번 도전해서 두 번 다 추락한 곳이었다.",
+   q:"어떻게 답했어요?",
+   opts:["'루트 분석 먼저 하고 나서 얘기하자.' 감정 넣을 필요 없잖아.","말 없이 루트 앞으로 걸어가서 그냥 올랐어.","'이길 수 있을진 모르겠는데, 재밌겠다.' 진심으로 웃으면서.","'같이 올라보자. 경쟁보다 같이 푸는 게 더 재밌잖아.'"],
+   s:[[2,0,0,0,1,0],[0,0,2,0,1,0],[0,1,0,2,0,0],[0,0,0,0,0,2]]},
+  {scene:"7장 — 다나 교수의 루트",title:"당신의 약점이 세팅돼 있었다",
+   story:"다나 교수가 조용히 불렀다. '이거 어제 밤새 세팅했어요. 당신만을 위해.' 루트 보자마자 알았다. 내가 제일 못하는 동작들만 모아놨다는 걸.",
+   q:"어떻게 시작했어요?",
+   opts:["못하는 동작이니까 더 꼼꼼하게 분석했어. 약점부터 똑바로 봐야 하잖아.","그냥 몸 믿고 올라갔어. 생각할수록 더 못하게 되더라고.","'교수님, 이거 제 약점만 모은 거 맞죠?' 확인은 해야 하잖아.","추락은 각오하고, 일단 많이 시도해보자 마음먹었어."],
+   s:[[2,0,0,0,1,0],[0,2,1,0,0,0],[0,0,0,1,0,1],[0,0,0,2,0,0]]},
+  {scene:"8장 — 유이 선배",title:"3년째 재학 중인 선배의 조언",
+   story:"밤에 혼자 연습하다 유이 선배를 만났다. '왜 아직도 여기 있어요?' 물었더니 웃으며 답했다. '졸업하면 여기 못 오잖아.' 그리고 덧붙였다. '너는 벽을 오르는 게 아니야. 사실은 ____을 오르는 거야.'",
+   q:"빈칸에 가장 공감 가는 말은?",
+   opts:["'가능성을' — 매번 새로운 답을 찾아가는 것","'감각을' — 몸이 기억하는 것들을 쌓아가는 것","'한계를' — 불가능을 가능으로 바꾸는 것","'순간을' — 지금 이 벽 앞에 서 있다는 것 자체"],
+   s:[[2,0,0,1,0,0],[0,2,0,0,0,1],[0,0,2,0,2,0],[0,1,0,2,0,1]]},
+  {scene:"9장 — 최종 시험",title:"가장 높은 벽. 규칙은 하나",
+   story:"최종 시험. 학교에서 제일 높은 벽 앞에 다 같이 섰다. 교장이 말했다. '규칙은 하나. 반드시 완등할 필요는 없다.' 그 말에 모두 표정이 달라졌다.",
+   q:"어떻게 올랐어요?",
+   opts:["완등 여부 상관없이 내가 세운 전략대로 끝까지 갔어.","몸 상태에만 집중했어. 오늘 내 몸이 어디까지 말을 듣는지 궁금했거든.","'완등 안 해도 된다'는 말 그냥 무시했어. 어차피 완등할 거니까.","천천히, 이 벽을 즐기면서 올랐어. 마지막이라는 생각으로."],
+   s:[[2,0,0,0,2,0],[0,2,0,0,0,0],[0,0,2,0,2,0],[0,1,0,2,0,1]]},
+  {scene:"10장 — 엔딩",title:"교장의 한마디",
+   story:"완등하든 못 하든, 모두 내려왔다. 교장 알바 크로우가 한 명씩 다가와 귓속말로 뭔가를 말해줬다. 낡은 클라이밍화. 조용한 눈빛. 당신 차례가 됐다.",
+   q:"가장 듣고 싶었던 말은?",
+   opts:["'네가 분석한 것들, 하나도 틀리지 않았어.'","'넌 벽이 뭘 말하는지 들을 줄 알아.'","'아직 못 푼 루트가 있다는 게 기뻐 보이는구나.'","'네가 여기 있어서 다른 사람들도 더 잘 올랐어.'"],
+   s:[[2,0,0,0,1,0],[0,2,0,1,0,0],[0,0,2,0,2,0],[0,0,0,0,0,2]]}
+];
+
+const SOULS=[
+  {emoji:"🦉",code:"ANALYST",nameA:'"3분 분석 후 1초 완등 소울"',subC:"레이븐우드의 지도 제작자",
+   desc:"벽 앞에서 가장 오래 서 있지만, 올라가면 거의 한 번에 간다. 남들이 두 번 추락하는 동안 당신은 아직 분석 중이다. 그리고 정확히 올라간다.",
+   tags:["베타 장인","꼼꼼함","전략적","암장의 위키백과"],hl:3,
+   quote:'"잠깐, 저 7번 홀드 각도 다시 볼게."',
+   never:"완등 못 한 루트를 이유 없이 넘기는 것. 반드시 원인을 찾고 간다.",
+   tmi:"폰 갤러리의 80%가 루트 사진이다. 각도별, 날짜별로 정리돼 있다.",
+   after:"졸업 후 진로: 루트 분석 유튜버. 영상 평균 길이 47분. 조회수는 낮지만 댓글 퀄리티가 예술이다.",
+   crow:"'네가 분석한 것들, 하나도 틀리지 않았어. 문제는 언제 올라가느냐지.'",
+   compat:[{type:"good",emoji:"⚡",soul:"IGNITE 소울",desc:"분석이 끝나기 전에 이미 올라가 있는 파트너. 답답하지만 배울 게 있다."},{type:"bad",emoji:"🌿",soul:"BLOOM 소울",desc:"'그냥 느낌으로 올라가면 돼요'라고 말하는 사람. 세계관이 충돌한다."}]},
+  {emoji:"🌊",code:"SKIN",nameA:'"설명은 못 하지만 몸이 알아 소울"',subC:"벽이 말하는 걸 듣는 자",
+   desc:"베타 설명은 잘 못 한다. 그런데 올라가는 걸 보면 모두가 배운다. 홀드를 잡기 전에 이미 몸이 알고 있는 클라이머.",
+   tags:["감각형","직관적","자연스러움","몸이 먼저"],hl:3,
+   quote:'"이건 느낌으로 가는 루트야. 설명하기가 어려워."',
+   never:"클라이밍화 신기 전에 스트레칭 건너뛰는 것. 몸 감각이 최우선이다.",
+   tmi:"홀드 색깔로 오늘 기분을 판단한다. 노란 홀드 많은 날이 제일 좋다.",
+   after:"졸업 후 진로: 자연 암벽 전문 가이드. 설명 대신 몸으로 보여준다. 리뷰는 항상 '말은 없는데 따라가면 올라가짐'.",
+   crow:"'넌 벽이 뭘 말하는지 들을 줄 알아. 그 감각, 절대 잃지 마.'",
+   compat:[{type:"good",emoji:"🦉",soul:"ANALYST 소울",desc:"내 감각을 언어로 설명해주는 파트너. 서로의 빈 곳을 채워준다."},{type:"bad",emoji:"🗡",soul:"BLADE 소울",desc:"매번 실패 원인을 데이터로 분석하자는 사람. 그냥 몸으로 다시 하면 되는데."}]},
+  {emoji:"⚡",code:"IGNITE",nameA:'"매트야 나 또 왔어 소울"',subC:"생각이 도착하기 전에 이미 출발한 자",
+   desc:"추락도 많지만 완등도 많다. 암장에서 제일 시끄러운 사람이 당신이다. 그리고 그게 왜 문제인지 아직도 잘 모른다.",
+   tags:["추진력","다이노왕","긍정적","매트와 친함"],hl:3,
+   quote:'"그냥 가면 돼 가면 돼 — (추락) 아 잠깐만 다시 가볼게."',
+   never:"루트 앞에서 5분 이상 서 있는 것. 몸이 근질거려서 못 버틴다.",
+   tmi:"추락 횟수를 세지 않는다. 세면 의욕이 떨어진다는 걸 경험으로 알았다.",
+   after:"졸업 후 진로: 다이노 전문 클라이머. 대회 출전 중 매트 착지 신기록 보유. 본인은 완등 기록이라고 우긴다.",
+   crow:"'아직 못 푼 루트가 있다는 게 기뻐 보이는구나. 그 표정이 네 무기야.'",
+   compat:[{type:"good",emoji:"🦉",soul:"ANALYST 소울",desc:"올라가기 전에 한 번만 분석하자는 파트너. 성공률이 진짜 올라간다."},{type:"bad",emoji:"🌊",soul:"SKIN 소울",desc:"'느낌으로 가야 해'라는 말. 느낌이 아니라 추진력으로 가는 건데."}]},
+  {emoji:"🌿",code:"BLOOM",nameA:'"이 루트 아직 더 있어 소울"',subC:"완등을 서두르지 않는 자",
+   desc:"완등보다 과정이 좋아서 오른다. 같은 루트를 열 번 타도 질리지 않고, 매번 다른 걸 발견한다. 암장에서 가장 오래 있는 사람.",
+   tags:["과정 중시","여유로움","루트 애호가","숫자가 생기면 재미없어짐"],hl:3,
+   quote:'"완등은 나중에 해도 되는데... 이 부분이 너무 재밌어."',
+   never:"등급 물어보는 것. 숫자가 생기는 순간 순수한 즐거움이 사라진다.",
+   tmi:"암장에 올 때마다 '오늘은 진짜 어려운 거 해야지' 생각하지만 결국 좋아하는 루트를 탄다.",
+   after:"졸업 후 진로: 루트 세터. 오르는 사람이 기쁜 루트를 만드는 게 꿈이다. 본인이 가장 오래 테스트한다.",
+   crow:"'네가 벽을 사랑하는 방식으로, 언젠가 이 벽도 너를 완전히 받아줄 거야.'",
+   compat:[{type:"good",emoji:"🔥",soul:"SPARK 소울",desc:"같이 있으면 암장 분위기가 달라지는 파트너. 즐기는 방식은 달라도 통한다."},{type:"bad",emoji:"⚡",soul:"IGNITE 소울",desc:"쉬지 않고 계속 다른 루트 가자는 사람. 이 루트 아직 다 못 즐겼는데."}]},
+  {emoji:"🗡",code:"BLADE",nameA:'"오늘 완등 못 하면 집 안 가 소울"',subC:"실패를 갈아 날을 세우는 자",
+   desc:"실패를 데이터로 만드는 클라이머. 감정 없이 루트를 분석하고, 무조건 완등한다. 암장에서 제일 무서운 눈빛을 가진 사람.",
+   tags:["냉정함","완등 집착","포기 모름","데이터가 곧 나"],hl:3,
+   quote:'"5번 추락. 3번은 발 위치, 2번은 타이밍. 다음 시도는 다르다."',
+   never:"완등 못 한 날 이유 없이 집에 가는 것. 반드시 오늘의 실패 원인을 기록하고 간다.",
+   tmi:"실패 영상 폴더가 성공 영상 폴더의 7배다. 실패가 더 중요하기 때문이다.",
+   after:"졸업 후 진로: 클라이밍 코치. 제자 성공률 98%. 나머지 2%도 추적 관찰 중이다.",
+   crow:"'네가 분석한 것들, 그리고 버텨낸 것들. 둘 다 실력이야.'",
+   compat:[{type:"good",emoji:"🔥",soul:"SPARK 소울",desc:"데이터만 보는 나에게 '오늘 잘했어요'를 말해주는 파트너. 의외로 필요하다."},{type:"bad",emoji:"🌿",soul:"BLOOM 소울",desc:"완등 안 해도 재밌다는 사람. 이해하고 싶지만 이해가 안 된다."}]},
+  {emoji:"🔥",code:"SPARK",nameA:'"옆 사람 완등에 내가 더 기뻐 소울"',subC:"혼자선 불씨, 함께선 불꽃",
+   desc:"혼자보다 같이 오를 때 빛나는 클라이머. 암장의 분위기를 바꾸고, 모두가 더 잘 오르게 만든다. 당신이 없으면 암장이 조용해진다.",
+   tags:["에너지","팀플레이","암장의 태양","내가 없으면 조용해짐"],hl:3,
+   quote:'"야야야 저 홀드 잡혔어?! 진짜로?! 잠깐 나도 해볼게!!"',
+   never:"암장에 혼자 가는 것. 혼자 가도 결국 옆 사람에게 말 걸고 있다.",
+   tmi:"다른 사람 완등하는 순간 자기 일처럼 기뻐서 소리를 지른다. 본인은 모른다.",
+   after:"졸업 후 진로: 클라이밍 커뮤니티 운영자. 암장 차렸더니 본인이 제일 오래 있다.",
+   crow:"'네가 여기 있어서 다른 사람들도 더 잘 올랐어. 그것도 실력이야.'",
+   compat:[{type:"good",emoji:"🗡",soul:"BLADE 소울",desc:"나는 분위기를 만들고, 저 사람은 전략을 짠다. 암장 최강 조합."},{type:"bad",emoji:"🦉",soul:"ANALYST 소울",desc:"분석한다고 벽 앞에서 한참 서 있는 사람. 말 걸면 집중 방해라고 한다."}]}
+];
+
+let cur=0,ans=Array(10).fill(null);
+
+function startQuiz(){
+  document.getElementById('cover').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  renderQ();
+}
+function renderQ(){
+  const q=Qs[cur],v=document.getElementById('quiz');
+  v.className='fade-in';
+  v.innerHTML=`
+    <div class="pg-bg"><div class="pg-fill" style="width:${(cur+1)/10*100}%"></div></div>
+    <div class="pg-meta"><span class="pg-scene">${q.scene}</span><span class="pg-num">${cur+1} / 10</span></div>
+    <div class="q-chapter">${q.scene.split('—')[0].trim()}</div>
+    <div class="q-title">${q.title}</div>
+    <div class="q-story"><p>${q.story}</p></div>
+    <div class="q-prompt">당신의 선택은?</div>
+    <div class="q-text">${q.q}</div>
+    <div class="opts">${q.opts.map((o,i)=>`<button class="opt${ans[cur]===i?' sel':''}" onclick="pick(${i})">${o}</button>`).join('')}</div>
+    <div class="nav">
+      <button class="nav-back" onclick="goBack()" ${cur===0?'disabled':''}>← 이전</button>
+      <button class="nav-next" onclick="goNext()" ${ans[cur]===null?'disabled':''}>${cur===9?'결과 보기 →':'다음 →'}</button>
+    </div>`;
+}
+function pick(i){ans[cur]=i;renderQ();}
+function goBack(){if(cur>0){cur--;renderQ();}}
+function goNext(){if(ans[cur]===null)return;if(cur<9){cur++;renderQ();}else showResult();}
+
+function showResult(){
+  const sc=Array(6).fill(0);
+  ans.forEach((a,qi)=>{if(a!==null)Qs[qi].s[a].forEach((v,i)=>sc[i]+=v);});
+  const top=sc.indexOf(Math.max(...sc));
+  const s=SOULS[top];
+  document.getElementById('quiz').style.display='none';
+  const rv=document.getElementById('result');
+  rv.style.display='block';rv.className='fade-in';
+  rv.innerHTML=`
+    <div class="r-kicker">RAVENWOOD CLIMBING ACADEMY — SOUL EXAMINATION</div>
+    <div class="r-em">${s.emoji}</div>
+    <div class="r-pill"><span>SOUL CODE: ${s.code}</span></div>
+    <div class="r-name">${s.nameA}</div>
+    <div class="r-sub">${s.subC}</div>
+    <div class="r-desc">${s.desc}</div>
+    <div class="tags">${s.tags.map((t,i)=>`<span class="tag${i===s.hl?' hl':''}">${t}</span>`).join('')}</div>
+    <div class="r-cards">
+      <div class="rc"><div class="rc-head"><span class="rc-ico">💬</span><span class="rc-label">이 소울의 암장 명대사</span></div><div class="rc-body"><div class="rc-quote">${s.quote}</div></div></div>
+      <div class="rc"><div class="rc-head"><span class="rc-ico">🚫</span><span class="rc-label">절대 못 하는 것</span></div><div class="rc-body">${s.never}</div></div>
+      <div class="rc"><div class="rc-head"><span class="rc-ico">🤫</span><span class="rc-label">아무도 안 물어본 TMI</span></div><div class="rc-body">${s.tmi}</div></div>
+      <div class="rc"><div class="rc-head"><span class="rc-ico">🎓</span><span class="rc-label">레이븐우드 졸업 후 진로</span></div><div class="rc-body">${s.after}</div></div>
+      <div class="rc"><div class="rc-head"><span class="rc-ico">⚔</span><span class="rc-label">파트너 궁합</span></div>
+        <div class="rc-body"><div class="compat">${s.compat.map(c=>`
+          <div class="compat-row compat-${c.type}">
+            <div class="compat-em">${c.emoji}</div>
+            <div><div class="compat-type">${c.type==='good'?'찰떡 파트너':'최악의 조합'}</div>
+            <div class="compat-soul">${c.soul}</div>
+            <div class="compat-desc">${c.desc}</div></div>
+          </div>`).join('')}</div></div>
+      </div>
+    </div>
+    <div class="crow-card">
+      <div class="crow-av">🧗</div>
+      <div><div class="crow-who">교장 알바 크로우의 한마디</div><div class="crow-says">${s.crow}</div></div>
+    </div>
+    <div class="actions">
+      <button class="btn-main" onclick="shareResult('${s.code}')">결과 공유하기</button>
+      <button class="btn-ghost" onclick="restart()">처음부터 다시 하기</button>
+    </div>`;
+}
+
+function shareResult(code){
+  const s=SOULS.find(x=>x.code===code);
+  const text=`[레이븐우드 클라이밍 아카데미]\n\nSOUL CODE: ${code}\n${s.nameA}\n${s.subC}\n\n나의 클라이밍 소울은? → ${location.href}`;
+  if(navigator.share){navigator.share({title:'레이븐우드 클라이밍 아카데미',text,url:location.href}).catch(()=>{});}
+  else{navigator.clipboard.writeText(text).then(()=>{const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);});}
+}
+function restart(){
+  cur=0;ans=Array(10).fill(null);
+  document.getElementById('result').style.display='none';
+  const c=document.getElementById('cover');
+  c.style.display='flex';c.className='fade-in';
+}
+</script>
+</body>
+</html>
